@@ -1,9 +1,7 @@
 // eptipi.cpp : Defines the entry point for the console application.
 //
-
 #include "stdafx.h"
 #include "eptipi.h"
-#include <afxsock.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -34,9 +32,20 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 		else
 		{
 			// TODO: code your application's behavior here.
+			if (AfxSocketInit() == FALSE)
+			{
+				cout << "Khong the khoi tao Socket Libraray";
+				return FALSE;
+			}
 
-
-
+			//Chuong trinh bat dau
+			try {
+				Eptipi Client;
+				Client.connectServer(L"127.0.0.1");
+			}
+			catch (exception& e) {
+				cout << e.what() << endl;
+			}
 		}
 	}
 	else
