@@ -13,8 +13,11 @@ void Eptipi::connectServer(const wchar_t * serverAddr) {
 
 	bool isConnect = client->Connect(serverAddr, 21);
 
-	if (!isConnect)
-		throw exception("Khong the ket noi den server");
+	if (!isConnect) {
+		wstring s = wstring(L"Khong the ket noi den server ") + serverAddr;
+		throw l_exception(s.c_str());
+	}
+		
 
 	client->Receive(buffer, BUFFER_LENGTH, 0);
 	cout << buffer << endl;

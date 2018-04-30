@@ -31,6 +31,8 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 		}
 		else
 		{
+			//==========================================================================
+			
 			// TODO: code your application's behavior here.
 			if (AfxSocketInit() == FALSE)
 			{
@@ -41,11 +43,13 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 			//Chuong trinh bat dau
 			try {
 				Eptipi Client;
-				Client.connectServer(L"127.0.0.1");
+				Client.connectServer(argv[1]);
 			}
 			catch (exception& e) {
 				cout << e.what() << endl;
 			}
+
+			//===========================================================================
 		}
 	}
 	else

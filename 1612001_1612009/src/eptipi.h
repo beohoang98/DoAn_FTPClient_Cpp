@@ -26,3 +26,21 @@ public:
 
 	~Eptipi();
 };
+
+
+class l_exception : exception {
+private:
+	wstring msg;
+public:
+	l_exception() : exception() {};
+	l_exception(const wchar_t* s) {
+		msg = s;
+	}
+	l_exception(const wstring s) {
+		msg = s;
+	}
+
+	virtual const wchar_t * what() {
+		return msg.c_str();
+	}
+};
