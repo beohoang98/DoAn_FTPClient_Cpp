@@ -41,6 +41,9 @@
     <ClCompile Include="EptipiClass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="EptipiHandleCmd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="eptipi.rc">

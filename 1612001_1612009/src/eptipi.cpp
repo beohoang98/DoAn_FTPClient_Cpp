@@ -39,14 +39,40 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 				cout << "Khong the khoi tao Socket Libraray";
 				return FALSE;
 			}
+			wchar_t default_servername[] = L"127.0.0.1";
 
 			//Chuong trinh bat dau
 			try {
 				Eptipi Client;
-				Client.connectServer(argv[1]);
+				string user_input;
+				stringstream to_split_input;
+				string user_cmd, user_path;
+
+				if (argc > 2) 
+					Client.connectServer(argv[1]);
+				else
+					Client.connectServer(default_servername);
+
+				if (!Client.login()) {
+					return 1;
+				}
+
+				while (true) {
+					cout << "ftp> ";
+					getline(cin, user_input);
+
+					to_split_input = stringstream(user_input);
+					getline(to_split_input, user_cmd, ' ');
+					getline(to_split_input, user_path);
+
+					Client.handleCmd(user_cmd, user_path);
+
+					if (user_cmd == "quit")
+						break;
+				}
 			}
-			catch (exception& e) {
-				cout << e.what() << endl;
+			catch (l_exception& e) {
+				cout << "ERROR: " << e.what() << endl;
 			}
 
 			//===========================================================================
