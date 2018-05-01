@@ -36,7 +36,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 			// TODO: code your application's behavior here.
 			if (AfxSocketInit() == FALSE)
 			{
-				cout << "Khong the khoi tao Socket Libraray";
+				cout << "Khong the khoi tao Socket";
 				return FALSE;
 			}
 			wchar_t default_servername[] = L"127.0.0.1";

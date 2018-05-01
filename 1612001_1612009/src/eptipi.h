@@ -21,9 +21,11 @@ enum FTPCode {
 	OPEN_ACTIVE_PORT_SUCCESS = 200,
 	CANNOT_OPEN_DATA_CONNECT = 425,
 
+	READY_TRANSFER = 150,
+
 	TRANSFER_SUCCESS = 226,
 
-	DISCONNECT = 421
+	CONNECT_FAILED = 421
 };
 
 #define BUFFER_LENGTH 512
@@ -45,8 +47,8 @@ protected:
 	void sendCmd(wstring cmd);
 	bool receive();
 
-	unsigned short getCode();
-	unsigned short getReturnPort();
+	int getCode();
+	int getReturnPort();
 	string getReturnStr();
 
 	CSocket * openActivePortAndConnect();

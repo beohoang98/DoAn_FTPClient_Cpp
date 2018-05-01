@@ -127,6 +127,8 @@ bool Eptipi::receive() {
 	}
 
 	this->returnStr = buffer;
+	this->returnCode = -1;
+	this->returnPort = -1;
 
 	//split code
 	ss = stringstream(buffer);
@@ -170,7 +172,7 @@ bool Eptipi::receive() {
 /*---------------------------------------------------
 	get return code after call Eptipi::receive
 */
-unsigned short Eptipi::getCode()
+int Eptipi::getCode()
 {
 	return this->returnCode;
 }
@@ -179,7 +181,7 @@ unsigned short Eptipi::getCode()
 	get return port after call Eptipi::receive
 	@return -1 if do not any port return
 */
-unsigned short Eptipi::getReturnPort()
+int Eptipi::getReturnPort()
 {
 	return this->returnPort;
 }

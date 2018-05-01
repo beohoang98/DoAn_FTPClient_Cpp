@@ -24,7 +24,7 @@ void Eptipi::lietKeChiTiet()
 		}
 
 		transferPort->Close();
-		free(transferPort);
+		delete transferPort;
 	}
 
 	this->receive();
@@ -38,32 +38,44 @@ void Eptipi::lietKeChiTiet()
 */
 void Eptipi::lietKeDonGian()
 {
+	char buffer[BUFFER_LENGTH];
+	memset(buffer, 0, BUFFER_LENGTH);
+
 	CSocket * transferPort = openActivePortAndConnect();
-	CSocket server;
-	CSocket * tmp;
 
 	if (transferPort != NULL) {
 		this->sendCmd("NLST\r\n");
 		this->receive();
+
 		cout << '\t' << getReturnStr() << endl;
 
-		transferPort->Listen(1);
-		transferPort->Accept(server);
-
-		char buffer[BUFFER_LENGTH];
-		memset(buffer, 0, BUFFER_LENGTH);
-		while (server.Receive(buffer, BUFFER_LENGTH - 1) > 0) {
-			cout << buffer;
-			memset(buffer, 0, BUFFER_LENGTH);
+		if (this->getReturnPort() == -1) {
+			//active mode
+			CSocket server;
+			transferPort->Listen(1);
+			transferPort->Accept(server);
+			
+			while (server.Receive(buffer, BUFFER_LENGTH - 1) > 0) {
+				cout << buffer;
+				memset(buffer, 0, BUFFER_LENGTH);
+			}
+			
+			server.Close();
 		}
-
+		else {
+			//passive mode
+			while (transferPort->Receive(buffer, BUFFER_LENGTH - 1) > 0) {
+				cout << buffer;
+				memset(buffer, 0, BUFFER_LENGTH);
+			}
+		}
 		transferPort->Close();
-		free(transferPort);
+		delete transferPort;
 	}
 
 	this->receive();
 	cout << '\t' << getReturnStr() << endl;
-	//425 Cannot open data connect
+	//425 Cannot open data connection
 }
  
 
