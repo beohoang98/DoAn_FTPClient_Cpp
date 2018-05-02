@@ -274,27 +274,55 @@ CSocket * Eptipi::openPassivePortAndConnect() {
 
 /*------------------------------------------------------------
 	open transfer port
-	@return (NULL) if cannot open any port in active and pasv mode
-	@return (CSocket *) if have one mode connected
+	@param (beforeConnect) ham callback thuc hien truoc khi server va client ket noi data port
+	@param (afterConnect) ham callback thuc hien sau khi server va client ket noi data port
 */
-CSocket * Eptipi::openTransferPort() {
+void Eptipi::openDataPort(bool (*beforeConnect)(EptipiCallbackParam), void (*afterConnect)(EptipiCallbackParam), EptipiCallbackParam cb) {
 	// try passive
 	CSocket * transferPort = openPassivePortAndConnect();
+	bool isResponseOK = true;
 
 	if (transferPort == NULL) {
 		// try active
 		transferPort = openActivePortAndConnect();
-		if (transferPort == NULL) {
-			// cannot connect
-			return NULL;
+		CSocket server;
+
+		if (transferPort != NULL) {
+			isResponseOK = beforeConnect({ cb.path, &cmdConn, NULL });
+			
+			if (!transferPort->Listen(1) && !transferPort->Accept(server))
+			{
+				afterConnect({ "", NULL, NULL });
+			}
+			else 
+			{
+				EptipiCallbackParam newCB = cb;
+				newCB.cmdCon = &cmdConn;
+				newCB.dataCon = &server;
+				
+				if (isResponseOK) afterConnect(newCB);
+				
+				server.Close();
+			}
 		}
 	}
-	
-	//this->receive();
-	//cout << "\t" << getReturnStr() << endl;
-	//150 Open ....
+	else {
+		//passive method
+		EptipiCallbackParam newCB = cb;
+		newCB.cmdCon = &cmdConn;
+		newCB.dataCon = transferPort;
 
-	return transferPort;
+		isResponseOK = beforeConnect(newCB);
+		if(isResponseOK) 
+			afterConnect(newCB);
+	}
+	transferPort->Close();
+	delete transferPort;
+
+	if (isResponseOK) {
+		this->receive();
+		cout << "\t" << getReturnStr() << endl;
+	}
 }
 
 /* MAIN FUNC ============================================== */

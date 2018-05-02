@@ -28,6 +28,12 @@ enum FTPCode {
 	CONNECT_FAILED = 421
 };
 
+struct EptipiCallbackParam {
+	std::string path;
+	CSocket * cmdCon;
+	CSocket * dataCon;
+};
+
 #define BUFFER_LENGTH 512
 
 using namespace std;
@@ -53,7 +59,7 @@ protected:
 
 	CSocket * openActivePortAndConnect();
 	CSocket * openPassivePortAndConnect();
-	CSocket * openTransferPort();
+	void openDataPort(bool(*)(EptipiCallbackParam), void(*)(EptipiCallbackParam), EptipiCallbackParam);
 
 public:
 	Eptipi();
@@ -78,6 +84,10 @@ public:
 	void downFile(string fileName); // get
 	void upNhieuFile(string fileNames); // mput
 	void downNhieuFile(string fileNames); // mget
+	void xoaFile(string filename);
+	
+	void taoFolder(string tenfolder);
+	void xoaFolder(string tenfolder);
 
 	~Eptipi();
 };

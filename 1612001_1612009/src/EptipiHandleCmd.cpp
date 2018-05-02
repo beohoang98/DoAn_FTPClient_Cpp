@@ -2,6 +2,9 @@
 
 #include "stdafx.h"
 #include "eptipi.h"
+#include <fstream>
+
+using namespace std;
 
 
 /*------------------------------------------
@@ -10,26 +13,37 @@
 */
 void Eptipi::lietKeChiTiet()
 {
-	CSocket * transferPort = openTransferPort();
-	if (transferPort != NULL) {
-		this->sendCmd("LIST\r\n");
-		this->receive();
-		cout << '\t' << getReturnStr() << endl;
+	struct deKhaiBaoHam {
+		static bool before(EptipiCallbackParam cb) {
+			string cmd = "LIST\r\n";
+			cb.cmdCon->Send(cmd.c_str(), cmd.length());
 
-		char buffer[BUFFER_LENGTH];
-		memset(buffer, 0, BUFFER_LENGTH);
-		while (transferPort->Receive(buffer, BUFFER_LENGTH - 1) > 0) {
-			cout << buffer;
+			char buffer[BUFFER_LENGTH] = { 0 };
+			cb.cmdCon->Receive(buffer, BUFFER_LENGTH - 1);
+			cout << "\t" << buffer << endl;
+
+			int code;
+			stringstream ss(buffer);
+			ss >> code;
+
+			if (code != FTPCode::READY_TRANSFER)
+				return false;
+			return true;
+		};
+		static void after(EptipiCallbackParam cb) {
+			if (cb.dataCon == NULL) return;
+
+			char buffer[BUFFER_LENGTH];
 			memset(buffer, 0, BUFFER_LENGTH);
+			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1) > 0) {
+				cout << buffer;
+				memset(buffer, 0, BUFFER_LENGTH);
+			}
 		}
+	};
+	EptipiCallbackParam cb;
 
-		transferPort->Close();
-		delete transferPort;
-	}
-
-	this->receive();
-	cout << '\t' << getReturnStr() << endl;
-	//425 Cannot open data connect
+	openDataPort(deKhaiBaoHam::before, deKhaiBaoHam::after, cb);
 }
 
 /*------------------------------------------
@@ -38,44 +52,37 @@ void Eptipi::lietKeChiTiet()
 */
 void Eptipi::lietKeDonGian()
 {
-	char buffer[BUFFER_LENGTH];
-	memset(buffer, 0, BUFFER_LENGTH);
+	struct ASD {
+		static bool before(EptipiCallbackParam cb) {
+			string cmd = "NLST\r\n";
+			cb.cmdCon->Send(cmd.c_str(), cmd.length());
 
-	CSocket * transferPort = openActivePortAndConnect();
+			char buffer[BUFFER_LENGTH] = { 0 };
+			cb.cmdCon->Receive(buffer, BUFFER_LENGTH - 1);
+			cout << "\t" << buffer << endl;
 
-	if (transferPort != NULL) {
-		this->sendCmd("NLST\r\n");
-		this->receive();
+			int code;
+			stringstream ss(buffer);
+			ss >> code;
 
-		cout << '\t' << getReturnStr() << endl;
+			if (code != FTPCode::READY_TRANSFER)
+				return false;
+			return true;
+		};
+		static void after(EptipiCallbackParam cb) {
+			if (cb.dataCon == NULL) return;
 
-		if (this->getReturnPort() == -1) {
-			//active mode
-			CSocket server;
-			transferPort->Listen(1);
-			transferPort->Accept(server);
-			
-			while (server.Receive(buffer, BUFFER_LENGTH - 1) > 0) {
-				cout << buffer;
-				memset(buffer, 0, BUFFER_LENGTH);
-			}
-			
-			server.Close();
-		}
-		else {
-			//passive mode
-			while (transferPort->Receive(buffer, BUFFER_LENGTH - 1) > 0) {
+			char buffer[BUFFER_LENGTH];
+			memset(buffer, 0, BUFFER_LENGTH);
+			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1) > 0) {
 				cout << buffer;
 				memset(buffer, 0, BUFFER_LENGTH);
 			}
 		}
-		transferPort->Close();
-		delete transferPort;
-	}
+	};
+	EptipiCallbackParam cb;
 
-	this->receive();
-	cout << '\t' << getReturnStr() << endl;
-	//425 Cannot open data connection
+	openDataPort(ASD::before, ASD::after, cb);
 }
  
 
@@ -126,7 +133,52 @@ void Eptipi::upFile(string fileName)
 */
 void Eptipi::downFile(string fileName)
 {
+	struct ASD {
+		string filename;
+		static bool before(EptipiCallbackParam cb)
+		{
+			string cmd = "RETR " + cb.path + "\r\n";
+			cb.cmdCon->Send(cmd.c_str(), cmd.length());
 
+			char buffer[BUFFER_LENGTH] = { 0 };
+			cb.cmdCon->Receive(buffer, BUFFER_LENGTH - 1);
+			cout << "\t" << buffer << endl;
+
+			int code;
+			stringstream ss(buffer);
+			ss >> code;
+
+			if (code != FTPCode::READY_TRANSFER)
+				return false;
+			return true;
+		};
+		static void after(EptipiCallbackParam cb)
+		{
+			if (cb.dataCon == NULL)
+				return;
+
+			ofstream fileout(cb.path);
+			if (!fileout.is_open()) {
+				cout << "\tError: cannot save downloaded file\n\n";
+				return;
+			}
+
+			char buffer[BUFFER_LENGTH];
+			memset(buffer, 0, BUFFER_LENGTH);
+			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1) > 0) {
+				fileout << buffer;
+				memset(buffer, 0, BUFFER_LENGTH);
+			}
+
+			cout << "\tDownload " << cb.path << " successfully\n\n";
+			fileout.close();
+		}
+	};
+
+	EptipiCallbackParam callbackparam;
+	callbackparam.path = fileName;
+
+	openDataPort(ASD::before, ASD::after, callbackparam);
 }
  
 /*------------------------------------------
