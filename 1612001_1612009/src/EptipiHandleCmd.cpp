@@ -14,12 +14,17 @@ using namespace std;
 void Eptipi::lietKeChiTiet()
 {
 	struct deKhaiBaoHam {
-		static bool before(EptipiCallbackParam cb) {
+
+		/*
+			thuc hien cau lenh de su dung data port
+			@param (cb) du lieu luu lai de callback
+		*/
+		static bool before(FTP::CallbackInfo cb) {
 			string cmd = "LIST\r\n";
 			cb.cmdCon->Send(cmd.c_str(), cmd.length());
 
 			char buffer[BUFFER_LENGTH] = { 0 };
-			cb.cmdCon->Receive(buffer, BUFFER_LENGTH - 1);
+			Eptipi::receiveOneLine(cb.cmdCon, buffer, BUFFER_LENGTH);
 			cout << "\t" << buffer << endl;
 
 			int code;
@@ -30,7 +35,12 @@ void Eptipi::lietKeChiTiet()
 				return false;
 			return true;
 		};
-		static void after(EptipiCallbackParam cb) {
+
+		/*
+			thuc hien sau khi port duoc connect thanh cong
+			@param (cb) du lieu callback luu lai bao gom dataCon(data port da connect)
+		*/
+		static void after(FTP::CallbackInfo cb) {
 			if (cb.dataCon == NULL) return;
 
 			char buffer[BUFFER_LENGTH];
@@ -41,8 +51,11 @@ void Eptipi::lietKeChiTiet()
 			}
 		}
 	};
-	EptipiCallbackParam cb;
 
+	this->sendCmd("TYPE A\r\n"); //ascii mode
+	this->receiveOneLine();
+
+	FTP::CallbackInfo cb;
 	openDataPort(deKhaiBaoHam::before, deKhaiBaoHam::after, cb);
 }
 
@@ -53,12 +66,16 @@ void Eptipi::lietKeChiTiet()
 void Eptipi::lietKeDonGian()
 {
 	struct ASD {
-		static bool before(EptipiCallbackParam cb) {
+		/*
+		thuc hien cau lenh de su dung data port
+		@param (cb) du lieu luu lai de callback
+		*/
+		static bool before(FTP::CallbackInfo cb) {
 			string cmd = "NLST\r\n";
 			cb.cmdCon->Send(cmd.c_str(), cmd.length());
 
 			char buffer[BUFFER_LENGTH] = { 0 };
-			cb.cmdCon->Receive(buffer, BUFFER_LENGTH - 1);
+			Eptipi::receiveOneLine(cb.cmdCon, buffer, BUFFER_LENGTH);
 			cout << "\t" << buffer << endl;
 
 			int code;
@@ -69,7 +86,11 @@ void Eptipi::lietKeDonGian()
 				return false;
 			return true;
 		};
-		static void after(EptipiCallbackParam cb) {
+		/*
+		thuc hien sau khi port duoc connect thanh cong
+		@param (cb) du lieu callback luu lai bao gom dataCon(data port da connect)
+		*/
+		static void after(FTP::CallbackInfo cb) {
 			if (cb.dataCon == NULL) return;
 
 			char buffer[BUFFER_LENGTH];
@@ -80,11 +101,33 @@ void Eptipi::lietKeDonGian()
 			}
 		}
 	};
-	EptipiCallbackParam cb;
 
+	this->sendCmd("TYPE A\r\n"); //ascii mode
+	this->receiveOneLine();
+
+	FTP::CallbackInfo cb;
 	openDataPort(ASD::before, ASD::after, cb);
 }
  
+/*
+ldir
+*/
+void Eptipi::lietKeClientChiTiet()
+{
+	cout << "\tClient dir:\n\n";
+	system("dir");
+	cout << endl;
+}
+
+/*
+lls
+*/
+void Eptipi::lietKeClientDonGian()
+{
+	cout << "\tClient dir:\n\n";
+	system("dir /b");
+	cout << endl;
+}
 
 /*------------------------------------------
 
@@ -135,13 +178,18 @@ void Eptipi::downFile(string fileName)
 {
 	struct ASD {
 		string filename;
-		static bool before(EptipiCallbackParam cb)
+
+		/*
+		thuc hien cau lenh de su dung data port
+		@param (cb) du lieu luu lai de callback
+		*/
+		static bool before(FTP::CallbackInfo cb)
 		{
 			string cmd = "RETR " + cb.path + "\r\n";
 			cb.cmdCon->Send(cmd.c_str(), cmd.length());
 
 			char buffer[BUFFER_LENGTH] = { 0 };
-			cb.cmdCon->Receive(buffer, BUFFER_LENGTH - 1);
+			Eptipi::receiveOneLine(cb.cmdCon, buffer, BUFFER_LENGTH);
 			cout << "\t" << buffer << endl;
 
 			int code;
@@ -152,11 +200,17 @@ void Eptipi::downFile(string fileName)
 				return false;
 			return true;
 		};
-		static void after(EptipiCallbackParam cb)
+
+		/*
+		thuc hien sau khi port duoc connect thanh cong
+		@param (cb) du lieu callback luu lai bao gom dataCon(data port da connect)
+		*/
+		static void after(FTP::CallbackInfo cb)
 		{
 			if (cb.dataCon == NULL)
 				return;
 
+			//create new file
 			ofstream fileout(cb.path);
 			if (!fileout.is_open()) {
 				cout << "\tError: cannot save downloaded file\n\n";
@@ -166,6 +220,7 @@ void Eptipi::downFile(string fileName)
 			char buffer[BUFFER_LENGTH];
 			memset(buffer, 0, BUFFER_LENGTH);
 			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1) > 0) {
+				//write data to file
 				fileout << buffer;
 				memset(buffer, 0, BUFFER_LENGTH);
 			}
@@ -175,7 +230,10 @@ void Eptipi::downFile(string fileName)
 		}
 	};
 
-	EptipiCallbackParam callbackparam;
+	this->sendCmd("TYPE I\r\n"); //binary mode
+	this->receiveOneLine();
+
+	FTP::CallbackInfo callbackparam;
 	callbackparam.path = fileName;
 
 	openDataPort(ASD::before, ASD::after, callbackparam);
