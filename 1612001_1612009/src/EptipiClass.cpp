@@ -71,7 +71,7 @@ bool Eptipi::login()
 	getline(cin, name);
 
 	this->sendCmd("USER " + name + "\r\n");
-	this->receive();
+	this->receiveOneLine();
 	cout << "\t" << getReturnStr() << endl;
 
 	//password
@@ -79,7 +79,7 @@ bool Eptipi::login()
 	readPassword(pass);
 
 	this->sendCmd("PASS " + pass + "\r\n");
-	this->receive();
+	this->receiveOneLine();
 	cout << "\t" << getReturnStr() << endl;
 
 	if (getCode() == FTPCode::LOGIN_SUCCESS) {
@@ -113,7 +113,7 @@ void Eptipi::sendCmd(wstring cmd) {
 	receive string return by server and fetch code and port
 	(can than) neu dung khong dung luc server tra ve, chuong trinh se bi lap vo tan
 */
-bool Eptipi::receive() {
+bool Eptipi::receiveAll() {
 	stringstream ss; // for split return string
 	string unusedStr;
 
@@ -159,16 +159,91 @@ bool Eptipi::receive() {
 		// 227 Entering Long Passive Mode (|||port|)
 		ss >> this->returnPort;
 	}
-	else if (this->returnCode == FTPCode::OPEN_ACTIVE_PORT_SUCCESS) {
-		// Chu dong mo port nen da co san port
+
+	return true;
+}
+
+bool Eptipi::receiveOneLine() {
+	stringstream ss; // for split return string
+	string unusedStr;
+
+	char buffer[BUFFER_LENGTH];
+	memset(buffer, 0, BUFFER_LENGTH);
+	char * pos = buffer;
+
+	while (cmdConn.Receive(pos, 1)) {
+		char c = pos[0];
+		pos++;
+
+		if (c == '\n') {
+			break;
+		}
 	}
-	else {
-		//khong co port tra ve
+	if (pos == buffer) {
+		//disconnect to server
+		return false;
+	}
+
+	this->returnStr = buffer;
+	this->returnCode = -1;
+	this->returnPort = -1;
+
+	//split code
+	ss = stringstream(buffer);
+	ss >> this->returnCode;
+	//split string
+	getline(ss, unusedStr, '(');
+	//split return port
+	if (this->returnCode == FTPCode::OPEN_PASV_PORT) {
+		//227 Entering Passive Mode (h1,h2,h3,h4,p1,p0)
+		int unusedInt, p1, p0;
+		char comma;
+		ss >> unusedInt >> comma >> unusedInt >> comma
+			>> unusedInt >> comma >> unusedInt >> comma
+			>> p1 >> comma >> p0;
+
+		if (ss.fail())
+			this->returnPort = -1;
+		else
+			this->returnPort = p1 * 256 + p0;
+	}
+	else if (this->returnCode == FTPCode::OPEN_ESPV_PORT) {
+		// 227 Entering Extented Passive Mode (address, port)
+		string tmp;
+		ss >> tmp;
+		ss >> this->returnPort;
+	}
+	else if (this->returnCode == FTPCode::OPEN_LPSV_PORT) {
+		// 227 Entering Long Passive Mode (|||port|)
+		ss >> this->returnPort;
 	}
 
 	return true;
 }
 
+/*
+	receiveOneLine for socket outer class 
+*/
+bool Eptipi::receiveOneLine(CSocket * sock, char buf[], const size_t len)
+{
+	memset(buf, 0, len);
+	char * pos = buf;
+
+	while (sock->Receive(pos, 1)) {
+		char c = pos[0];
+		pos++;
+
+		if (c == '\n') {
+			break;
+		}
+	}
+	if (pos == buf) {
+		//disconnect to server
+		return false;
+	}
+
+	return true;
+}
 /*---------------------------------------------------
 	get return code after call Eptipi::receive
 */
@@ -222,10 +297,10 @@ CSocket * Eptipi::openActivePortAndConnect() {
 
 	request << "PORT 127,0,0,1," << p1 << "," << p0 << "\r\n";
 	this->sendCmd(request.str());
-	this->receive();
+	this->receiveOneLine();
 
-	if (this->getCode() != FTPCode::OPEN_ACTIVE_PORT_SUCCESS) {
-		//server khong ket noi duoc port cua minh
+	if (this->getCode() != FTPCode::COMMAND_SUCCESS) {
+		//server khong chap nhan port cua minh
 		free(newSocket);
 		return NULL;
 	}
@@ -243,16 +318,16 @@ CSocket * Eptipi::openPassivePortAndConnect() {
 	
 	//try normal PASV
 	this->sendCmd("PASV\r\n");
-	this->receive();
+	this->receiveOneLine();
 	if (this->getReturnPort() == -1) {
 		//try EPSV
 		this->sendCmd("ESPV\r\n");
-		this->receive();
+		this->receiveOneLine();
 
 		if (this->getReturnPort() == -1) {
 			//try LPSV
 			this->sendCmd("LSPV\r\n");
-			this->receive();
+			this->receiveOneLine();
 		}
 	}
 
@@ -277,7 +352,7 @@ CSocket * Eptipi::openPassivePortAndConnect() {
 	@param (beforeConnect) ham callback thuc hien truoc khi server va client ket noi data port
 	@param (afterConnect) ham callback thuc hien sau khi server va client ket noi data port
 */
-void Eptipi::openDataPort(bool (*beforeConnect)(EptipiCallbackParam), void (*afterConnect)(EptipiCallbackParam), EptipiCallbackParam cb) {
+void Eptipi::openDataPort(bool (*beforeConnect)(FTP::CallbackInfo), void (*afterConnect)(FTP::CallbackInfo), FTP::CallbackInfo cb) {
 	// try passive
 	CSocket * transferPort = openPassivePortAndConnect();
 	bool isResponseOK = true;
@@ -296,11 +371,11 @@ void Eptipi::openDataPort(bool (*beforeConnect)(EptipiCallbackParam), void (*aft
 			}
 			else 
 			{
-				EptipiCallbackParam newCB = cb;
-				newCB.cmdCon = &cmdConn;
-				newCB.dataCon = &server;
+				FTP::CallbackInfo info = cb;
+				info.cmdCon = &cmdConn;
+				info.dataCon = &server;
 				
-				if (isResponseOK) afterConnect(newCB);
+				if (isResponseOK) afterConnect(info);
 				
 				server.Close();
 			}
@@ -308,19 +383,19 @@ void Eptipi::openDataPort(bool (*beforeConnect)(EptipiCallbackParam), void (*aft
 	}
 	else {
 		//passive method
-		EptipiCallbackParam newCB = cb;
-		newCB.cmdCon = &cmdConn;
-		newCB.dataCon = transferPort;
+		FTP::CallbackInfo info = cb;
+		info.cmdCon = &cmdConn;
+		info.dataCon = transferPort;
 
-		isResponseOK = beforeConnect(newCB);
+		isResponseOK = beforeConnect(info);
 		if(isResponseOK) 
-			afterConnect(newCB);
+			afterConnect(info);
 	}
 	transferPort->Close();
 	delete transferPort;
 
 	if (isResponseOK) {
-		this->receive();
+		this->receiveOneLine();
 		cout << "\t" << getReturnStr() << endl;
 	}
 }
@@ -335,12 +410,20 @@ void Eptipi::openDataPort(bool (*beforeConnect)(EptipiCallbackParam), void (*aft
 void Eptipi::handleCmd(string cmd, string path) 
 {
 	if (cmd == "dir")
-	{ // liet ke chi tiet folder va file
+	{ // liet ke chi tiet folder va file tren server
 		this->lietKeChiTiet();
 	}
 	else if (cmd == "ls")
-	{// liet ke ten folder va file
+	{// liet ke ten folder va file tren server
 		this->lietKeDonGian();
+	}
+	if (cmd == "ldir")
+	{ // liet ke chi tiet folder va file o Client
+		this->lietKeClientChiTiet();
+	}
+	else if (cmd == "lls")
+	{// liet ke ten folder va file o Client
+		this->lietKeClientDonGian();
 	}
 	else if (cmd == "cd")
 	{// thay doi duong dan tren server
@@ -377,7 +460,7 @@ void Eptipi::handleCmd(string cmd, string path)
 	else if (cmd == "quit") 
 	{
 		this->sendCmd("QUIT\r\n");
-		this->receive();
+		this->receiveOneLine();
 		cout << this->getReturnStr() << endl;
 	}
 	else {

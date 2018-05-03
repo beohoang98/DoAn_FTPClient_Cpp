@@ -18,7 +18,7 @@ enum FTPCode {
 	OPEN_LPSV_PORT = 228,
 	OPEN_ESPV_PORT = 229,
 
-	OPEN_ACTIVE_PORT_SUCCESS = 200,
+	COMMAND_SUCCESS = 200,
 	CANNOT_OPEN_DATA_CONNECT = 425,
 
 	READY_TRANSFER = 150,
@@ -28,18 +28,20 @@ enum FTPCode {
 	CONNECT_FAILED = 421
 };
 
-struct EptipiCallbackParam {
-	std::string path;
-	CSocket * cmdCon;
-	CSocket * dataCon;
-};
+namespace FTP {
+	struct CallbackInfo {
+		std::string path;
+		CSocket * cmdCon;
+		CSocket * dataCon;
+	};
+}
+
 
 #define BUFFER_LENGTH 512
 
 using namespace std;
 
 class Eptipi {
-// class nay de thuc hien cac cac giao thuc ftp den server 
 private:
 	const wchar_t * servername;
 
@@ -51,7 +53,8 @@ private:
 protected:
 	void sendCmd(string cmd);
 	void sendCmd(wstring cmd);
-	bool receive();
+	bool receiveAll();
+	bool receiveOneLine();
 
 	int getCode();
 	int getReturnPort();
@@ -59,9 +62,11 @@ protected:
 
 	CSocket * openActivePortAndConnect();
 	CSocket * openPassivePortAndConnect();
-	void openDataPort(bool(*)(EptipiCallbackParam), void(*)(EptipiCallbackParam), EptipiCallbackParam);
+	void openDataPort(bool(*)(FTP::CallbackInfo), void(*)(FTP::CallbackInfo), FTP::CallbackInfo);
 
 public:
+	static bool receiveOneLine(CSocket* sock, char buf[], const size_t len);
+
 	Eptipi();
 
 	void connectServer(const wchar_t * serverAddr);
@@ -73,6 +78,8 @@ public:
 	//main command
 	void lietKeChiTiet(); // dir
 	void lietKeDonGian(); // ls
+	void lietKeClientChiTiet(); //ldir
+	void lietKeClientDonGian(); //lls
 	
 	void changeServerDir(string path); // cd
 	void changeClientDir(string path); // lcd
