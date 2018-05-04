@@ -142,7 +142,9 @@ void Eptipi::changeServerDir(string path)
 */
 void Eptipi::changeClientDir(string path)
 {
-
+	SetCurrentDirectoryA(path.c_str());
+	system("cd");
+	cout << endl;
 }
  
 
@@ -185,10 +187,18 @@ void Eptipi::downFile(string fileName)
 		*/
 		static bool before(FTP::CallbackInfo cb)
 		{
-			string cmd = "RETR " + cb.path + "\r\n";
-			cb.cmdCon->Send(cmd.c_str(), cmd.length());
-
+			string cmd;
 			char buffer[BUFFER_LENGTH] = { 0 };
+			
+			//switch to binary mode
+			cmd = "TYPE I\r\n";
+			cb.cmdCon->Send(cmd.c_str(), cmd.length());
+			Eptipi::receiveOneLine(cb.cmdCon, buffer, BUFFER_LENGTH);
+			memset(buffer, 0, BUFFER_LENGTH);
+			
+			// get file
+			cmd = "RETR " + cb.path + "\r\n";
+			cb.cmdCon->Send(cmd.c_str(), cmd.length());
 			Eptipi::receiveOneLine(cb.cmdCon, buffer, BUFFER_LENGTH);
 			cout << "\t" << buffer << endl;
 
@@ -209,29 +219,31 @@ void Eptipi::downFile(string fileName)
 		{
 			if (cb.dataCon == NULL)
 				return;
+			stringstream forReadCode;
 
 			//create new file
-			ofstream fileout(cb.path);
+			ofstream fileout(cb.path, ios::binary);
 			if (!fileout.is_open()) {
 				cout << "\tError: cannot save downloaded file\n\n";
 				return;
 			}
 
+			int length = 0;
+			int bytes = 0;
 			char buffer[BUFFER_LENGTH];
 			memset(buffer, 0, BUFFER_LENGTH);
-			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1) > 0) {
+			while ((bytes = cb.dataCon->Receive(buffer, BUFFER_LENGTH)) && bytes > 0) {
 				//write data to file
-				fileout << buffer;
+				fileout.write(buffer, bytes);
 				memset(buffer, 0, BUFFER_LENGTH);
+				length += bytes;
 			}
 
-			cout << "\tDownload " << cb.path << " successfully\n\n";
-			fileout.close();
+			cout << "\tDownload " << cb.path << " successfully\n";
+			cout << "\tLength: " << length << "\n\n";
+			fileout.close();			
 		}
 	};
-
-	this->sendCmd("TYPE I\r\n"); //binary mode
-	this->receiveOneLine();
 
 	FTP::CallbackInfo callbackparam;
 	callbackparam.path = fileName;

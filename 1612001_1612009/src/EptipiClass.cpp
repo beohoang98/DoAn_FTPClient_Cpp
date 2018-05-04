@@ -457,7 +457,7 @@ void Eptipi::handleCmd(string cmd, string path)
 	{// up nhieu file len server
 		this->downNhieuFile(path);
 	}
-	else if (cmd == "quit") 
+	else if (cmd == "quit")
 	{
 		this->sendCmd("QUIT\r\n");
 		this->receiveOneLine();

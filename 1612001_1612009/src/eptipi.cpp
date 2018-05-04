@@ -59,6 +59,8 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 
 				while (true) {
 					cout << "ftp> ";
+
+					cin.sync();
 					getline(cin, user_input);
 
 					to_split_input = stringstream(user_input);
