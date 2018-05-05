@@ -221,29 +221,7 @@ bool Eptipi::receiveOneLine() {
 	return true;
 }
 
-/*
-	receiveOneLine for socket outer class 
-*/
-bool Eptipi::receiveOneLine(CSocket * sock, char buf[], const size_t len)
-{
-	memset(buf, 0, len);
-	char * pos = buf;
 
-	while (sock->Receive(pos, 1)) {
-		char c = pos[0];
-		pos++;
-
-		if (c == '\n') {
-			break;
-		}
-	}
-	if (pos == buf) {
-		//disconnect to server
-		return false;
-	}
-
-	return true;
-}
 /*---------------------------------------------------
 	get return code after call Eptipi::receive
 */
@@ -352,7 +330,7 @@ CSocket * Eptipi::openPassivePortAndConnect() {
 	@param (beforeConnect) ham callback thuc hien truoc khi server va client ket noi data port
 	@param (afterConnect) ham callback thuc hien sau khi server va client ket noi data port
 */
-void Eptipi::openDataPort(bool (*beforeConnect)(FTP::CallbackInfo), void (*afterConnect)(FTP::CallbackInfo), FTP::CallbackInfo cb) {
+void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConnect)(CallbackInfo&), CallbackInfo cb) {
 	// try passive
 	CSocket * transferPort = openPassivePortAndConnect();
 	bool isResponseOK = true;
@@ -363,16 +341,15 @@ void Eptipi::openDataPort(bool (*beforeConnect)(FTP::CallbackInfo), void (*after
 		CSocket server;
 
 		if (transferPort != NULL) {
-			isResponseOK = beforeConnect({ cb.path, &cmdConn, NULL });
+			isResponseOK = beforeConnect(cb);
 			
 			if (!transferPort->Listen(1) && !transferPort->Accept(server))
 			{
-				afterConnect({ "", NULL, NULL });
+				afterConnect(cb);
 			}
 			else 
 			{
-				FTP::CallbackInfo info = cb;
-				info.cmdCon = &cmdConn;
+				CallbackInfo info = cb;
 				info.dataCon = &server;
 				
 				if (isResponseOK) afterConnect(info);
@@ -383,8 +360,7 @@ void Eptipi::openDataPort(bool (*beforeConnect)(FTP::CallbackInfo), void (*after
 	}
 	else {
 		//passive method
-		FTP::CallbackInfo info = cb;
-		info.cmdCon = &cmdConn;
+		CallbackInfo info = cb;
 		info.dataCon = transferPort;
 
 		isResponseOK = beforeConnect(info);
@@ -463,8 +439,14 @@ void Eptipi::handleCmd(string cmd, string path)
 		this->receiveOneLine();
 		cout << this->getReturnStr() << endl;
 	}
+	else if (cmd == "help") {
+		this->showAllCmd();
+	}
+	else if (cmd == "") {
+		//do nothing
+	}
 	else {
-		cout << "\tunknown command\n\n";
+		cout << "\tunknown command, type help to show all command\n\n";
 	}
 }
 

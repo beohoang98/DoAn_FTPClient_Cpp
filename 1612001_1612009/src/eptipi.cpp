@@ -60,17 +60,21 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 				while (true) {
 					cout << "ftp> ";
 
-					cin.sync();
+					cin.sync(); //flush \n
 					getline(cin, user_input);
 
 					to_split_input = stringstream(user_input);
 					getline(to_split_input, user_cmd, ' ');
 					getline(to_split_input, user_path);
+					to_split_input.clear();
 
-					Client.handleCmd(user_cmd, user_path);
+					Client.handleCmd(user_cmd, user_path); //include quit
 
 					if (user_cmd == "quit")
 						break;
+
+					user_cmd = "";
+					user_path = "";//reset input
 				}
 			}
 			catch (l_exception& e) {
