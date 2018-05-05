@@ -3,6 +3,7 @@
 #include "stdafx.h"
 #include "eptipi.h"
 #include <fstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -19,19 +20,12 @@ void Eptipi::lietKeChiTiet()
 			thuc hien cau lenh de su dung data port
 			@param (cb) du lieu luu lai de callback
 		*/
-		static bool before(FTP::CallbackInfo cb) {
-			string cmd = "LIST\r\n";
-			cb.cmdCon->Send(cmd.c_str(), cmd.length());
+		static bool before(CallbackInfo &cb) {
+			cb.mainFTP->sendCmd("LIST\r\n");
+			cb.mainFTP->receiveOneLine();
+			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
 
-			char buffer[BUFFER_LENGTH] = { 0 };
-			Eptipi::receiveOneLine(cb.cmdCon, buffer, BUFFER_LENGTH);
-			cout << "\t" << buffer << endl;
-
-			int code;
-			stringstream ss(buffer);
-			ss >> code;
-
-			if (code != FTPCode::READY_TRANSFER)
+			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
 				return false;
 			return true;
 		};
@@ -40,7 +34,7 @@ void Eptipi::lietKeChiTiet()
 			thuc hien sau khi port duoc connect thanh cong
 			@param (cb) du lieu callback luu lai bao gom dataCon(data port da connect)
 		*/
-		static void after(FTP::CallbackInfo cb) {
+		static void after(CallbackInfo &cb) {
 			if (cb.dataCon == NULL) return;
 
 			char buffer[BUFFER_LENGTH];
@@ -55,7 +49,8 @@ void Eptipi::lietKeChiTiet()
 	this->sendCmd("TYPE A\r\n"); //ascii mode
 	this->receiveOneLine();
 
-	FTP::CallbackInfo cb;
+	CallbackInfo cb;
+	cb.mainFTP = this;
 	openDataPort(deKhaiBaoHam::before, deKhaiBaoHam::after, cb);
 }
 
@@ -70,19 +65,12 @@ void Eptipi::lietKeDonGian()
 		thuc hien cau lenh de su dung data port
 		@param (cb) du lieu luu lai de callback
 		*/
-		static bool before(FTP::CallbackInfo cb) {
-			string cmd = "NLST\r\n";
-			cb.cmdCon->Send(cmd.c_str(), cmd.length());
+		static bool before(CallbackInfo &cb) {
+			cb.mainFTP->sendCmd("NLST\r\n");
+			cb.mainFTP->receiveOneLine();
+			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
 
-			char buffer[BUFFER_LENGTH] = { 0 };
-			Eptipi::receiveOneLine(cb.cmdCon, buffer, BUFFER_LENGTH);
-			cout << "\t" << buffer << endl;
-
-			int code;
-			stringstream ss(buffer);
-			ss >> code;
-
-			if (code != FTPCode::READY_TRANSFER)
+			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
 				return false;
 			return true;
 		};
@@ -90,7 +78,7 @@ void Eptipi::lietKeDonGian()
 		thuc hien sau khi port duoc connect thanh cong
 		@param (cb) du lieu callback luu lai bao gom dataCon(data port da connect)
 		*/
-		static void after(FTP::CallbackInfo cb) {
+		static void after(CallbackInfo &cb) {
 			if (cb.dataCon == NULL) return;
 
 			char buffer[BUFFER_LENGTH];
@@ -105,7 +93,8 @@ void Eptipi::lietKeDonGian()
 	this->sendCmd("TYPE A\r\n"); //ascii mode
 	this->receiveOneLine();
 
-	FTP::CallbackInfo cb;
+	CallbackInfo cb;
+	cb.mainFTP = this;
 	openDataPort(ASD::before, ASD::after, cb);
 }
  
@@ -142,7 +131,9 @@ void Eptipi::changeServerDir(string path)
 */
 void Eptipi::changeClientDir(string path)
 {
-
+	SetCurrentDirectoryA(path.c_str());
+	system("cd");
+	cout << endl;
 }
  
 
@@ -178,25 +169,55 @@ void Eptipi::downFile(string fileName)
 {
 	struct ASD {
 		string filename;
+		
+		static void showPercent(ostream &os, int cur, int size, clock_t time) {
+			int showLength = cur * 20 / size;
+			int speed;
+			if (time > 0) speed = 1024 * CLOCKS_PER_SEC / time;
+			else speed = 0;
 
+
+			os << "\r\t[";
+			for (int i = 0; i < showLength; ++i)
+				os << char(219);
+			for (int i = 0; i < 20 - showLength; ++i)
+				os << '-';
+			os << "] " << cur/1024 << "/" << size/1024 << "KB ";
+			os << setw(4) << speed << "KB/s";
+		}
 		/*
 		thuc hien cau lenh de su dung data port
 		@param (cb) du lieu luu lai de callback
 		*/
-		static bool before(FTP::CallbackInfo cb)
+		static bool before(CallbackInfo&cb)
 		{
-			string cmd = "RETR " + cb.path + "\r\n";
-			cb.cmdCon->Send(cmd.c_str(), cmd.length());
-
+			string cmd;
 			char buffer[BUFFER_LENGTH] = { 0 };
-			Eptipi::receiveOneLine(cb.cmdCon, buffer, BUFFER_LENGTH);
-			cout << "\t" << buffer << endl;
+			int filesize = 0;
 
-			int code;
-			stringstream ss(buffer);
-			ss >> code;
+			//get file size
+			cb.mainFTP->sendCmd("SIZE " + cb.path + "\r\n");
+			cb.mainFTP->receiveOneLine();
+			if (cb.mainFTP->getCode() == FTPCode::FILE_STATUS) {
+				stringstream forReadStr(cb.mainFTP->getReturnStr());
+				forReadStr >> filesize	// first is code (213)
+						>> filesize;	// second is actually size
+				cb.filesize = filesize;
+			}
+			else {
+				cout << "\t" << cb.mainFTP->getReturnStr() << endl;
+			}
+			
+			//switch to binary mode
+			cb.mainFTP->sendCmd("TYPE I\r\n");
+			cb.mainFTP->receiveOneLine();
+			
+			// get file
+			cb.mainFTP->sendCmd("RETR " + cb.path + "\r\n");
+			cb.mainFTP->receiveOneLine();
+			cout << cb.mainFTP->getReturnStr() << endl;
 
-			if (code != FTPCode::READY_TRANSFER)
+			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
 				return false;
 			return true;
 		};
@@ -205,36 +226,48 @@ void Eptipi::downFile(string fileName)
 		thuc hien sau khi port duoc connect thanh cong
 		@param (cb) du lieu callback luu lai bao gom dataCon(data port da connect)
 		*/
-		static void after(FTP::CallbackInfo cb)
+		static void after(CallbackInfo&cb)
 		{
 			if (cb.dataCon == NULL)
 				return;
+			int filesize = 0;
+			int bytes = 0;
+			char buffer[BUFFER_LENGTH];
+			memset(buffer, 0, BUFFER_LENGTH);
 
 			//create new file
-			ofstream fileout(cb.path);
+			ofstream fileout(cb.path, ios::binary);
 			if (!fileout.is_open()) {
 				cout << "\tError: cannot save downloaded file\n\n";
 				return;
 			}
 
-			char buffer[BUFFER_LENGTH];
-			memset(buffer, 0, BUFFER_LENGTH);
-			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1) > 0) {
+			clock_t countTm = clock();
+			int oldKB = 1024 * 1024; // 1MB
+			while ((bytes = cb.dataCon->Receive(buffer, BUFFER_LENGTH)) && bytes > 0) {
 				//write data to file
-				fileout << buffer;
+				fileout.write(buffer, bytes);
 				memset(buffer, 0, BUFFER_LENGTH);
+				filesize += bytes;
+
+				if (cb.filesize > 0 && filesize > oldKB) {
+					countTm = clock() - countTm;
+					ASD::showPercent(cout, filesize, cb.filesize, countTm);
+					oldKB += 1024 * 1024;
+				}
 			}
 
-			cout << "\tDownload " << cb.path << " successfully\n\n";
-			fileout.close();
+			ASD::showPercent(cout, filesize, cb.filesize, 0);
+			cout << endl;
+			cout << "\tDownload " << cb.path << " successfully\n";
+			cout << "\tLength: " << filesize << "\n\n";
+			fileout.close();			
 		}
 	};
 
-	this->sendCmd("TYPE I\r\n"); //binary mode
-	this->receiveOneLine();
-
-	FTP::CallbackInfo callbackparam;
+	CallbackInfo callbackparam;
 	callbackparam.path = fileName;
+	callbackparam.mainFTP = this;
 
 	openDataPort(ASD::before, ASD::after, callbackparam);
 }
@@ -255,3 +288,13 @@ void Eptipi::downNhieuFile(string fileNames)
 
 }
  
+
+void Eptipi::showAllCmd() {
+	for (auto cmd : listCmd) {
+		cout << '\t' << setw(20) << left 
+			<< cmd.first 
+			<< " : " 
+			<< cmd.second << endl;
+	}
+	cout << endl;
+}

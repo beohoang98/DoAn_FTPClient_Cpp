@@ -7,6 +7,7 @@
 #include <sstream>
 #include <stdio.h>
 #include <conio.h>
+#include <map>
 
 enum FTPCode {
 	CONNECT_SUCCESS = 220,
@@ -25,16 +26,10 @@ enum FTPCode {
 
 	TRANSFER_SUCCESS = 226,
 
+	FILE_STATUS = 213,
+
 	CONNECT_FAILED = 421
 };
-
-namespace FTP {
-	struct CallbackInfo {
-		std::string path;
-		CSocket * cmdCon;
-		CSocket * dataCon;
-	};
-}
 
 
 #define BUFFER_LENGTH 512
@@ -51,6 +46,19 @@ private:
 	int returnPort;
 
 protected:
+	struct CallbackInfo {
+		std::string path = "";
+		Eptipi * mainFTP = NULL;
+		CSocket * dataCon = NULL;
+		int filesize = 0;
+	};
+
+	CSocket * openActivePortAndConnect();
+	CSocket * openPassivePortAndConnect();
+	void openDataPort(bool(*)(CallbackInfo&), void(*)(CallbackInfo&), CallbackInfo);
+
+public:
+	// ham co ban
 	void sendCmd(string cmd);
 	void sendCmd(wstring cmd);
 	bool receiveAll();
@@ -60,19 +68,10 @@ protected:
 	int getReturnPort();
 	string getReturnStr();
 
-	CSocket * openActivePortAndConnect();
-	CSocket * openPassivePortAndConnect();
-	void openDataPort(bool(*)(FTP::CallbackInfo), void(*)(FTP::CallbackInfo), FTP::CallbackInfo);
-
-public:
-	static bool receiveOneLine(CSocket* sock, char buf[], const size_t len);
-
 	Eptipi();
 
 	void connectServer(const wchar_t * serverAddr);
-
 	bool login();
-
 	void handleCmd(string cmd, string path);
 
 	//main command
@@ -96,6 +95,8 @@ public:
 	void taoFolder(string tenfolder);
 	void xoaFolder(string tenfolder);
 
+	void showAllCmd();
+
 	~Eptipi();
 };
 
@@ -115,4 +116,19 @@ public:
 	virtual const wchar_t * what() {
 		return msg.c_str();
 	}
+};
+
+const map<string, string> listCmd = {
+	{ "dir", "liet ke chi tiet thu muc tren server" },
+	{ "ls", "liet ke ten cac thu muc tren server" },
+	{ "ldir", "liet ke chi tiet thu muc client" },
+	{ "lls", "liet ke ten thu muc client" },
+	{ "cd", "thay doi duong dan tren server" },
+	{ "lcd", "thay doi duong dan o client" },
+	{ "pwd", "in ra duong dan hien tai tren server" },
+	{ "get [ten file]", "download file [ten file] ve client" },
+	{ "mget [expr]", "download nhieu file thoa man [expr]" },
+	{ "put [asd]", "upload file [asd] len server" },
+	{ "mput", "upload nhieu file" },
+	{ "quit", "thoat ftp" }
 };
