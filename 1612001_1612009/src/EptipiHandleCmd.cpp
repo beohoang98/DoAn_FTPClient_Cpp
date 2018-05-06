@@ -168,14 +168,11 @@ void Eptipi::upFile(string fileName)
 void Eptipi::downFile(string fileName)
 {
 	struct ASD {
-		string filename;
-		
 		static void showPercent(ostream &os, int cur, int size, clock_t time) {
 			int showLength = cur * 20 / size;
 			int speed;
 			if (time > 0) speed = 1024 * CLOCKS_PER_SEC / time;
 			else speed = 0;
-
 
 			os << "\r\t[";
 			for (int i = 0; i < showLength; ++i)
@@ -183,7 +180,7 @@ void Eptipi::downFile(string fileName)
 			for (int i = 0; i < 20 - showLength; ++i)
 				os << '-';
 			os << "] " << cur/1024 << "/" << size/1024 << "KB ";
-			os << setw(4) << speed << "KB/s";
+			os << setw(4) << speed << "KB/s ";
 		}
 		/*
 		thuc hien cau lenh de su dung data port
@@ -257,8 +254,9 @@ void Eptipi::downFile(string fileName)
 				}
 			}
 
-			ASD::showPercent(cout, filesize, cb.filesize, 0);
+			if (cb.filesize > 0) ASD::showPercent(cout, filesize, cb.filesize, 0);
 			cout << endl;
+			
 			cout << "\tDownload " << cb.path << " successfully\n";
 			cout << "\tLength: " << filesize << "\n\n";
 			fileout.close();			
@@ -277,7 +275,7 @@ void Eptipi::downFile(string fileName)
 */
 void Eptipi::upNhieuFile(string fileNames)
 {
-
+	
 }
  
 /*------------------------------------------
@@ -285,7 +283,55 @@ void Eptipi::upNhieuFile(string fileNames)
 */
 void Eptipi::downNhieuFile(string fileNames)
 {
+	struct GetFileList {
+		static bool before(CallbackInfo& cb) {
+			cb.mainFTP->sendCmd("NLST " + cb.path + "\r\n");
+			cb.mainFTP->receiveOneLine();
+			cout << cb.mainFTP->getReturnStr() << endl;
 
+			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
+				return false;
+			return true;
+		};
+		static void after(CallbackInfo& cb) {
+			if (cb.dataCon == NULL)
+				return;
+
+			cb.path = "";
+			char buffer[BUFFER_LENGTH] = { 0 };
+			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1)) {
+				cb.path += buffer;
+			}
+		}
+	};
+
+	CallbackInfo cb;
+	cb.mainFTP = this;
+	cb.path = fileNames;
+	openDataPort(GetFileList::before, GetFileList::after, cb);
+
+	stringstream forSplitFile(cb.path);
+	string filename;
+	string cmd;
+
+	while (!forSplitFile.eof()) {
+		getline(forSplitFile, filename, '\r');
+		if (filename[0] == '\n') filename.erase(0, 1);
+		if (filename == "") break;
+
+		cout << "Get " << filename << "?(y-yes/else-no): ";
+
+		cin.sync(); //flush \n
+		getline(cin, cmd);
+		if (cmd == "y" || cmd == "yes") {
+			this->downFile(filename);
+		}
+		else {
+			//do nothing
+		}
+	}
+
+	cout << endl;
 }
  
 

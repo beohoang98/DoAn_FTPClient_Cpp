@@ -55,7 +55,7 @@ protected:
 
 	CSocket * openActivePortAndConnect();
 	CSocket * openPassivePortAndConnect();
-	void openDataPort(bool(*)(CallbackInfo&), void(*)(CallbackInfo&), CallbackInfo);
+	void openDataPort(bool(*)(CallbackInfo&), void(*)(CallbackInfo&), CallbackInfo&);
 
 public:
 	// ham co ban
