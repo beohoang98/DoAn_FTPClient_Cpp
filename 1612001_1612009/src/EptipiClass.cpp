@@ -330,7 +330,7 @@ CSocket * Eptipi::openPassivePortAndConnect() {
 	@param (beforeConnect) ham callback thuc hien truoc khi server va client ket noi data port
 	@param (afterConnect) ham callback thuc hien sau khi server va client ket noi data port
 */
-void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConnect)(CallbackInfo&), CallbackInfo cb) {
+void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConnect)(CallbackInfo&), CallbackInfo & cb) {
 	// try passive
 	CSocket * transferPort = openPassivePortAndConnect();
 	bool isResponseOK = true;
@@ -349,10 +349,9 @@ void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConn
 			}
 			else 
 			{
-				CallbackInfo info = cb;
-				info.dataCon = &server;
+				cb.dataCon = &server;
 				
-				if (isResponseOK) afterConnect(info);
+				if (isResponseOK) afterConnect(cb);
 				
 				server.Close();
 			}
@@ -360,12 +359,11 @@ void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConn
 	}
 	else {
 		//passive method
-		CallbackInfo info = cb;
-		info.dataCon = transferPort;
+		cb.dataCon = transferPort;
 
-		isResponseOK = beforeConnect(info);
+		isResponseOK = beforeConnect(cb);
 		if(isResponseOK) 
-			afterConnect(info);
+			afterConnect(cb);
 	}
 	transferPort->Close();
 	delete transferPort;
