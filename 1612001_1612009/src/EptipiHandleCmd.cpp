@@ -338,9 +338,56 @@ void Eptipi::downNhieuFile(string fileNames)
 void Eptipi::showAllCmd() {
 	for (auto cmd : listCmd) {
 		cout << '\t' << setw(20) << left 
-			<< cmd.first 
+			<< cmd.first
 			<< " : " 
-			<< cmd.second << endl;
+			<< cmd.second.title << endl;
 	}
 	cout << endl;
+}
+
+void Eptipi::showHelpFor(string cmd) {
+	auto info = listCmd.find(cmd);
+	
+	if (info == listCmd.end()) {
+		cout << "\tkhong tim thay " << cmd << "\n\n";
+		return;
+	}
+	
+	cout << "\t" << info->second.title << endl;
+	cout << info->second.description << endl;
+	cout << endl;
+}
+
+
+void Eptipi::switchToPassive()
+{
+	if (this->dataMode == FTPDataMode::PASSIVE)
+	{
+		cout << "\tVan dang tren passive mode\n\n";
+	}
+	else {
+		this->dataMode = FTPDataMode::PASSIVE;
+		cout << "\tDa chuyen sang passive mode\n\n";
+	}
+}
+void Eptipi::switchToActive()
+{
+	if (this->dataMode == FTPDataMode::ACTIVE)
+	{
+		cout << "\tVan dang tren active mode\n\n";
+	}
+	else {
+		this->dataMode = FTPDataMode::ACTIVE;
+		cout << "\tDa chuyen sang active mode\n\n";
+	}
+}
+void Eptipi::switchToBinary()
+{
+	this->fileMode = FTPFileMode::BINARY;
+	cout << "\tDa chuyen sang BINARY mode\n\n";
+}
+void Eptipi::switchToAscii()
+{
+	this->fileMode = FTPFileMode::ASCII;
+	cout << "\tDa chuyen sang ASCII mode\n\n";
 }

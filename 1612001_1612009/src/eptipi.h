@@ -31,6 +31,16 @@ enum FTPCode {
 	CONNECT_FAILED = 421
 };
 
+namespace FTPDataMode {
+	const UCHAR PASSIVE = 0;
+	const UCHAR ACTIVE = 1;
+	const UCHAR DEFAULT = PASSIVE;
+}
+namespace FTPFileMode {
+	const UCHAR BINARY = 0;
+	const UCHAR ASCII = 1;
+	const UCHAR DEFAULT = BINARY;
+}
 
 #define BUFFER_LENGTH 512
 
@@ -44,6 +54,9 @@ private:
 	int returnCode;
 	string returnStr;
 	int returnPort;
+
+	UCHAR dataMode;
+	UCHAR fileMode;
 
 protected:
 	struct CallbackInfo {
@@ -96,6 +109,12 @@ public:
 	void xoaFolder(string tenfolder);
 
 	void showAllCmd();
+	void showHelpFor(string cmd);
+
+	void switchToPassive();
+	void switchToActive();
+	void switchToBinary();
+	void switchToAscii();
 
 	~Eptipi();
 };
@@ -118,17 +137,105 @@ public:
 	}
 };
 
-const map<string, string> listCmd = {
-	{ "dir", "liet ke chi tiet thu muc tren server" },
-	{ "ls", "liet ke ten cac thu muc tren server" },
-	{ "ldir", "liet ke chi tiet thu muc client" },
-	{ "lls", "liet ke ten thu muc client" },
-	{ "cd", "thay doi duong dan tren server" },
-	{ "lcd", "thay doi duong dan o client" },
-	{ "pwd", "in ra duong dan hien tai tren server" },
-	{ "get [ten file]", "download file [ten file] ve client" },
-	{ "mget [expr]", "download nhieu file thoa man [expr]" },
-	{ "put [asd]", "upload file [asd] len server" },
-	{ "mput", "upload nhieu file" },
-	{ "quit", "thoat ftp" }
+// khai bao cac mo ta cua cau lenh tai day
+// define description of cmd here
+struct cmdDescription {
+	string title, description;
+};
+const map<string, cmdDescription> listCmd = {
+	{
+		"dir",
+		cmdDescription{
+			"liet ke chi tiet thu muc tren server",
+			""
+		}
+	},
+	{
+		"ls",
+		cmdDescription{
+			"liet ke ten cac thu muc tren server",
+			""
+		}
+	},
+	{
+		"ldir",
+		cmdDescription{
+			"liet ke chi tiet thu muc client",
+			""
+		}
+	},
+	{
+		"lls",
+		cmdDescription{
+			"liet ke ten thu muc client",
+			""
+		}
+	},
+	{
+		"cd",
+		cmdDescription{
+			"thay doi duong dan tren server",
+			R"(	cd [duong dan] de thay doi working dir den [duong dan])"
+		}
+	},
+	{
+		"lcd",
+		cmdDescription{
+			"thay doi duong dan o client",
+			R"(	lcd [duong dan] de thay doi working dir den [duong dan])"
+		}
+	},
+	{
+		"pwd",
+		cmdDescription{
+			"in ra duong dan hien tai tren server",
+			""
+		}
+	},
+	{
+		"get",
+		cmdDescription{
+			"download file ve client",
+			R"(	get [ten file] - de download file [ten file] tren )""\n"
+			R"(		server ve path hien tai cua client)"
+		}
+	},
+	{
+		"mget",
+		cmdDescription{
+			"mget [expr] - download nhieu file thoa man [expr]",
+			R"(	[expr] co the la:)""\n"
+			R"(	- *.txt)""\n"
+			R"(	- folder/*.*)""\n	..."
+		}
+	},
+	{
+		"put",
+		cmdDescription{
+			"put [asd] - upload file [asd] len server",
+			""
+		}
+	},
+	{
+		"mput",
+		cmdDescription{
+			"upload nhieu file",
+			""
+		}
+	},
+	{
+		"mode",
+		cmdDescription{
+			"set mode to BINARY or ASCII",
+			R"(	A - ASCII mode)""\n"
+			R"(	I - BINARY mode)"
+		}
+	},
+	{ 
+		"quit", 
+		cmdDescription{
+			"thoat ftp",
+			""
+		}
+	}
 };
