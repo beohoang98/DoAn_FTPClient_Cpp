@@ -22,7 +22,7 @@ void Eptipi::connectServer(const wchar_t * serverAddr)
 {
 	cmdConn.Create();
 
-	bool isConnect = cmdConn.Connect(serverAddr, 21);
+	int isConnect = cmdConn.Connect(serverAddr, 21);
 
 	if (!isConnect) {
 		wstring s = wstring(L"Khong the ket noi den server ") + serverAddr;

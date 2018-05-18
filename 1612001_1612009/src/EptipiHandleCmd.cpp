@@ -168,8 +168,8 @@ void Eptipi::upFile(string fileName)
 void Eptipi::downFile(string fileName)
 {
 	struct ASD {
-		static void showPercent(ostream &os, int cur, int size, clock_t time) {
-			int showLength = cur * 20 / size;
+		static void showPercent(ostream &os, INT64 cur, INT64 size, clock_t time) {
+			INT64 showLength = cur * 20 / size;
 			int speed;
 			if (time > 0) speed = 1024 * CLOCKS_PER_SEC / time;
 			else speed = 0;
@@ -190,7 +190,7 @@ void Eptipi::downFile(string fileName)
 		{
 			string cmd;
 			char buffer[BUFFER_LENGTH] = { 0 };
-			int filesize = 0;
+			INT64 filesize = 0;
 
 			//get file size
 			cb.mainFTP->sendCmd("SIZE " + cb.path + "\r\n");
