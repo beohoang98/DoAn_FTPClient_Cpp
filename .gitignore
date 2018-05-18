@@ -6,3 +6,5 @@ ipch/*
 ipch/
 *.sdf
 */*.sdf
+*/*.vscode
+*/*.vs

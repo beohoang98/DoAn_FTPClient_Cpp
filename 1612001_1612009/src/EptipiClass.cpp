@@ -7,6 +7,12 @@ using namespace std;
 /* ======================================================= */
 
 Eptipi::Eptipi() {
+	this->returnCode = -1;
+	this->returnPort = -1;
+	this->returnStr = "";
+
+	this->dataMode = FTPDataMode::DEFAULT;//passive
+	this->fileMode = FTPFileMode::DEFAULT;//binary
 }
 
 /*----------------------------------------------------
@@ -16,7 +22,7 @@ void Eptipi::connectServer(const wchar_t * serverAddr)
 {
 	cmdConn.Create();
 
-	bool isConnect = cmdConn.Connect(serverAddr, 21);
+	int isConnect = cmdConn.Connect(serverAddr, 21);
 
 	if (!isConnect) {
 		wstring s = wstring(L"Khong the ket noi den server ") + serverAddr;
@@ -282,6 +288,10 @@ CSocket * Eptipi::openActivePortAndConnect() {
 		free(newSocket);
 		return NULL;
 	}
+	if (!newSocket->Listen(1)) {
+		free(newSocket);
+		return NULL;
+	}
 
 	return newSocket;
 }
@@ -330,12 +340,11 @@ CSocket * Eptipi::openPassivePortAndConnect() {
 	@param (beforeConnect) ham callback thuc hien truoc khi server va client ket noi data port
 	@param (afterConnect) ham callback thuc hien sau khi server va client ket noi data port
 */
-void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConnect)(CallbackInfo&), CallbackInfo cb) {
-	// try passive
-	CSocket * transferPort = openPassivePortAndConnect();
+void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConnect)(CallbackInfo&), CallbackInfo & cb) {
+	CSocket * transferPort = NULL;
 	bool isResponseOK = true;
 
-	if (transferPort == NULL) {
+	if (this->dataMode == FTPDataMode::ACTIVE) {
 		// try active
 		transferPort = openActivePortAndConnect();
 		CSocket server;
@@ -343,16 +352,15 @@ void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConn
 		if (transferPort != NULL) {
 			isResponseOK = beforeConnect(cb);
 			
-			if (!transferPort->Listen(1) && !transferPort->Accept(server))
+			if (!transferPort->Accept(server, (SOCKADDR*)this->servername))
 			{
 				afterConnect(cb);
 			}
 			else 
 			{
-				CallbackInfo info = cb;
-				info.dataCon = &server;
+				cb.dataCon = &server;
 				
-				if (isResponseOK) afterConnect(info);
+				if (isResponseOK) afterConnect(cb);
 				
 				server.Close();
 			}
@@ -360,13 +368,14 @@ void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConn
 	}
 	else {
 		//passive method
-		CallbackInfo info = cb;
-		info.dataCon = transferPort;
+		transferPort = openPassivePortAndConnect();
+		cb.dataCon = transferPort;
 
-		isResponseOK = beforeConnect(info);
+		isResponseOK = beforeConnect(cb);
 		if(isResponseOK) 
-			afterConnect(info);
+			afterConnect(cb);
 	}
+
 	transferPort->Close();
 	delete transferPort;
 
@@ -385,6 +394,11 @@ void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConn
 */
 void Eptipi::handleCmd(string cmd, string path) 
 {
+	if (path == "--help") {
+		this->showHelpFor(cmd);
+		return;
+	}
+	
 	if (cmd == "dir")
 	{ // liet ke chi tiet folder va file tren server
 		this->lietKeChiTiet();
@@ -432,6 +446,34 @@ void Eptipi::handleCmd(string cmd, string path)
 	else if (cmd == "mget")
 	{// up nhieu file len server
 		this->downNhieuFile(path);
+	}
+	else if (cmd == "type")
+	{
+		if (path == "I" || path == "i")
+			this->switchToBinary();
+		else if (path == "A" || path == "a")
+			this->switchToAscii();
+		else if (path == "--help") {
+			this->showHelpFor(cmd);
+		}
+		else {
+			cout << "\tType khong hop le" << endl
+				<< "\tType hop le bao gom: A - ASCII, I - BINARY"
+				<< endl << endl;
+		}
+	}
+	else if (cmd == "mode")
+	{
+		if (path == "A" || path == "a") {
+			this->switchToActive();
+		}
+		else if (path == "P" || path == "p") {
+			this->switchToPassive();
+		}
+		else {
+			cout << "\tMode khong hop le" << endl;
+			this->showHelpFor("mode");
+		}
 	}
 	else if (cmd == "quit")
 	{
