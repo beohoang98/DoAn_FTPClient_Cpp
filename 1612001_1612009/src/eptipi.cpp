@@ -53,8 +53,9 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 				else
 					Client.connectServer(default_servername);
 
-				if (!Client.login()) {
-					return 1;
+				while (!Client.login())
+				{
+					cout << "Moi ban dang nhap lai" << endl;
 				}
 
 				while (true) {

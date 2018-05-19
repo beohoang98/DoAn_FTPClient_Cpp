@@ -170,8 +170,14 @@ void Eptipi::downFile(string fileName)
 	struct ASD {
 		static void showPercent(ostream &os, INT64 cur, INT64 size, clock_t time) {
 			INT64 showLength = cur * 20 / size;
+			if (showLength > 20) showLength = 20;
+			
 			int speed;
-			if (time > 0) speed = 1024 * CLOCKS_PER_SEC / time;
+			time_t esTime = 0;
+			if (time > 0) {
+				speed = cur * CLOCKS_PER_SEC / time;
+				esTime = (size - cur) / speed;
+			}
 			else speed = 0;
 
 			os << "\r\t[";
@@ -180,7 +186,10 @@ void Eptipi::downFile(string fileName)
 			for (int i = 0; i < 20 - showLength; ++i)
 				os << '-';
 			os << "] " << cur/1024 << "/" << size/1024 << "KB ";
-			os << setw(4) << speed << "KB/s ";
+			os << setw(4) << speed/1024 << "KB/s ";
+			os << setw(2) << esTime / 3600 << "h" 
+				<< setw(2) << (esTime % 3600) / 60 << "m" 
+				<< setw(2) << (esTime % 60) << "s";
 		}
 		/*
 		thuc hien cau lenh de su dung data port
@@ -239,8 +248,9 @@ void Eptipi::downFile(string fileName)
 				return;
 			}
 
-			clock_t countTm = clock();
-			int oldKB = 1024 * 1024; // 1MB
+			clock_t startTm = clock();
+			clock_t countTm;
+			INT64 oldKB = 8 * 1024 * 1024; // cu moi~ 8MB se hien thi % download
 			while ((bytes = cb.dataCon->Receive(buffer, BUFFER_LENGTH)) && bytes > 0) {
 				//write data to file
 				fileout.write(buffer, bytes);
@@ -248,7 +258,7 @@ void Eptipi::downFile(string fileName)
 				filesize += bytes;
 
 				if (cb.filesize > 0 && filesize > oldKB) {
-					countTm = clock() - countTm;
+					countTm = clock() - startTm;
 					ASD::showPercent(cout, filesize, cb.filesize, countTm);
 					oldKB += 1024 * 1024;
 				}
