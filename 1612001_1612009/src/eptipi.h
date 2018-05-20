@@ -195,14 +195,14 @@ const map<string, cmdDescription> listCmd = {
 		"cd",
 		cmdDescription{
 			"thay doi duong dan tren server",
-			"	cd [duong dan] de thay doi working dir den [duong dan]"
+			"\tcd [duong dan] de thay doi working dir den [duong dan]"
 		}
 	},
 	{
 		"lcd",
 		cmdDescription{
 			"thay doi duong dan o client",
-			"	lcd [duong dan] de thay doi working dir den [duong dan]"
+			"\tlcd [duong dan] de thay doi working dir den [duong dan]"
 		}
 	},
 	{
@@ -217,8 +217,8 @@ const map<string, cmdDescription> listCmd = {
 		cmdDescription{
 			"download file ve client",
 
-			"	get [ten file] - de download file [ten file] tren )\n"
-			"		server ve path hien tai cua client"
+			"\tget [ten file] - de download file [ten file] tren )\n"
+			"\t\tserver ve path hien tai cua client"
 		}
 	},
 	{
@@ -226,10 +226,10 @@ const map<string, cmdDescription> listCmd = {
 		cmdDescription{
 			"mget [expr] - download nhieu file thoa man [expr]",
 			
-			"	[expr] co the la:\n"
-			"	- *.txt\n"
-			"	- folder/*.*\n"
-			"	..."
+			"\t[expr] co the la:\n"
+			"\t- *.txt\n"
+			"\t- folder/*.*\n"
+			"\t..."
 		}
 	},
 	{
@@ -251,8 +251,8 @@ const map<string, cmdDescription> listCmd = {
 		cmdDescription{
 			"set mode to BINARY or ASCII",
 			
-			"	A - ASCII mode\n"
-			"	I - BINARY mode"
+			"\tA - ASCII mode\n"
+			"\tI - BINARY mode"
 		}
 	},
 	{ 
@@ -260,6 +260,41 @@ const map<string, cmdDescription> listCmd = {
 		cmdDescription{
 			"thoat ftp",
 			""
+		}
+	},
+	{
+		"del",
+		cmdDescription{
+			"Xoa file tren server",
+			
+			"\tmdel [ten-file] - xoa file [ten-file]"
+		}
+	},
+	{
+		"mdel",
+		cmdDescription{
+			"Xoa nhieu file tren server",
+
+			"\tmdel [expr...] - xoa file thoa man [expr...]\n"
+			"\t- mdel *.txt *.asd - xoa het file .txt va .asd\n"
+			"\t- ..."
+		}
+	},
+	{
+		"rmdir",
+		cmdDescription{
+			"Xoa thu muc trong",
+
+			"\trmdir [tenfolder] - Xoa thu muc [tenfolder]\n"
+			"\t- Neu thu muc khong rong, khong xoa dc"
+		}
+	},
+	{
+		"mkdir",
+		cmdDescription{
+			"Tao thu muc moi",
+
+			"\tmkdir [tenfolder] - Tao thu muc moi co ten [tenfolder]"
 		}
 	}
 };
