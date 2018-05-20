@@ -559,6 +559,10 @@ void Eptipi::handleCmd(string cmd, string path)
 	{
 		this->taoFolder(path);
 	}
+	else if (cmd == "pwd")
+	{
+		this->printServerPath();
+	}
 }
 
 
