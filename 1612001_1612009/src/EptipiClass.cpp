@@ -455,6 +455,10 @@ void Eptipi::handleCmd(string cmd, string path)
 	{
 		this->taoFolder(path);
 	}
+	else if (cmd == "pwd")
+	{
+		this->printServerPath();
+	}
 	else {
 		cout << "\tunknown command, type help to show all command\n\n";
 	}

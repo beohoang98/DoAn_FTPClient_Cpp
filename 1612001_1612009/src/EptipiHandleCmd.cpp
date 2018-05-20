@@ -144,7 +144,9 @@ void Eptipi::changeClientDir(string path)
 */
 void Eptipi::printServerPath()
 {
-
+	this->sendCmd("PWD\r\n"); //ascii mode
+	this->receiveOneLine();
+	cout << this->getReturnStr() << endl;
 }
  
 /*------------------------------------------
