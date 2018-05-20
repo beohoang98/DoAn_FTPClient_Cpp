@@ -50,7 +50,7 @@ using namespace std;
 
 class Eptipi {
 private:
-	const wchar_t * servername;
+	wstring servername;
 
 	CSocket cmdConn; // command connection
 	int returnCode;

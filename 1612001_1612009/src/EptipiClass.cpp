@@ -208,16 +208,21 @@ bool Eptipi::receiveOneLine() {
 	//split return port
 	if (this->returnCode == FTPCode::OPEN_PASV_PORT) {
 		//227 Entering Passive Mode (h1,h2,h3,h4,p1,p0)
-		int unusedInt, p1, p0;
+		int h1, h2, h3, h4, p1, p0;
 		char comma;
-		ss >> unusedInt >> comma >> unusedInt >> comma
-			>> unusedInt >> comma >> unusedInt >> comma
+		ss >> h1 >> comma >> h2 >> comma
+			>> h3 >> comma >> h4 >> comma
 			>> p1 >> comma >> p0;
 
 		if (ss.fail())
 			this->returnPort = -1;
-		else
+		else {
 			this->returnPort = p1 * 256 + p0;
+			this->servername = to_wstring(h1) + L"." 
+				+ to_wstring(h2) + L"."
+				+ to_wstring(h3) + L"."
+				+ to_wstring(h4);
+		}	
 	}
 	else if (this->returnCode == FTPCode::OPEN_ESPV_PORT) {
 		// 227 Entering Extented Passive Mode (address, port)
@@ -334,7 +339,7 @@ CSocket * Eptipi::openPassivePortAndConnect() {
 	if (!newSocket->Create()) {
 		return NULL;
 	}
-	if (!newSocket->Connect(this->servername, (UINT)this->getReturnPort())) {
+	if (!newSocket->Connect(this->servername.c_str(), (UINT)this->getReturnPort())) {
 		return NULL;
 	}
 
@@ -358,7 +363,7 @@ void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConn
 		if (transferPort != NULL) {
 			isResponseOK = beforeConnect(cb);
 			
-			if (!transferPort->Accept(server, (SOCKADDR*)this->servername))
+			if (!transferPort->Accept(server, (SOCKADDR*)this->servername.c_str()))
 			{
 				afterConnect(cb);
 			}
