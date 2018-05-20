@@ -309,6 +309,16 @@ void Eptipi::downNhieuFile(string fileNames)
 
 	stringstream split_path(fileNames);
 	string path_each;
+	string filename;
+	string cmd;
+	UCHAR isPrompt = true;
+
+	//ask user prompt or not
+	cout << "Do you want open prompt for each file?(y-yes, else-no) ";
+	cin >> cmd;
+	cin.sync();
+	if (cmd != "y" && cmd != "yes")
+		isPrompt = false;
 
 	while (!split_path.eof()) {
 		getline(split_path, path_each, ' ');
@@ -319,23 +329,22 @@ void Eptipi::downNhieuFile(string fileNames)
 		openDataPort(GetFileList::before, GetFileList::after, cb);
 
 		stringstream forSplitFile(cb.path);
-		string filename;
-		string cmd;
 
 		while (!forSplitFile.eof()) {
 			getline(forSplitFile, filename, '\r');
 			if (filename[0] == '\n') filename.erase(0, 1);
 			if (filename == "") break;
 
-			cout << "Get " << filename << "?(y-yes/else-no): ";
+			if (!isPrompt) {
+				this->downFile(filename);
+				continue;
+			}
 
+			cout << "Get " << filename << "?(y-yes/else-no): ";
 			cin.sync(); //flush \n
 			getline(cin, cmd);
 			if (cmd == "y" || cmd == "yes") {
 				this->downFile(filename);
-			}
-			else {
-				//do nothing
 			}
 		}
 	}
