@@ -547,6 +547,18 @@ void Eptipi::handleCmd(string cmd, string path)
 			showHelpFor("mode");
 		}
 	}
+	else if (cmd == "del")
+	{
+		this->xoaFile(path);
+	}
+	else if (cmd == "rmdir")
+	{
+		this->xoaFolder(path);
+	}
+	else if (cmd == "mkdir")
+	{
+		this->taoFolder(path);
+	}
 }
 
 

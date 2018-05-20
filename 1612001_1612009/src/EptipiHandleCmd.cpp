@@ -111,11 +111,13 @@ void Eptipi::lietKeClientDonGian(string path)
 }
 
 /*------------------------------------------
-
+cd
 */
 void Eptipi::changeServerDir(string path)
 {
-
+	this->sendCmd("CWD "+path+"\r\n"); //ascii mode
+	this->receiveOneLine();
+	cout << this->getReturnStr() << endl;
 }
  
 /*------------------------------------------
@@ -363,6 +365,7 @@ void Eptipi::showAllCmd() {
 	cout << endl;
 }
 
+
 void Eptipi::showHelpFor(string cmd) {
 	auto info = listCmd.find(cmd);
 	
@@ -409,3 +412,25 @@ void Eptipi::switchToAscii()
 	this->fileMode = FTPFileMode::ASCII;
 	cout << "\tDa chuyen sang ASCII mode\n\n";
 }
+
+void Eptipi::xoaFile(string filename)
+{
+	this->sendCmd("DELE " + filename + "\r\n"); //ascii mode
+	this->receiveOneLine();
+	cout << this->getReturnStr() << endl;
+}
+
+void Eptipi::xoaFolder(string tenfolder)
+{
+	this->sendCmd("XRMD " + tenfolder + "\r\n"); //ascii mode
+	this->receiveOneLine();
+	cout << this->getReturnStr() << endl;
+}
+
+void Eptipi::taoFolder(string tenfolder)
+{
+	this->sendCmd("XMKD " + tenfolder + "\r\n"); //ascii mode
+	this->receiveOneLine();
+	cout << this->getReturnStr() << endl;
+}
+
