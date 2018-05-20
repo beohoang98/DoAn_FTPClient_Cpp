@@ -213,7 +213,7 @@ void Eptipi::downFile(string fileName)
 			// get file
 			cb.mainFTP->sendCmd("RETR " + cb.path + "\r\n");
 			cb.mainFTP->receiveOneLine();
-			cout << cb.mainFTP->getReturnStr() << endl;
+			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
 
 			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
 				return false;
@@ -289,7 +289,7 @@ void Eptipi::downNhieuFile(string fileNames)
 		static bool before(CallbackInfo& cb) {
 			cb.mainFTP->sendCmd("NLST " + cb.path + "\r\n");
 			cb.mainFTP->receiveOneLine();
-			cout << cb.mainFTP->getReturnStr() << endl;
+			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
 
 			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
 				return false;
@@ -307,29 +307,36 @@ void Eptipi::downNhieuFile(string fileNames)
 		}
 	};
 
-	CallbackInfo cb;
-	cb.mainFTP = this;
-	cb.path = fileNames;
-	openDataPort(GetFileList::before, GetFileList::after, cb);
+	stringstream split_path(fileNames);
+	string path_each;
 
-	stringstream forSplitFile(cb.path);
-	string filename;
-	string cmd;
+	while (!split_path.eof()) {
+		getline(split_path, path_each, ' ');
 
-	while (!forSplitFile.eof()) {
-		getline(forSplitFile, filename, '\r');
-		if (filename[0] == '\n') filename.erase(0, 1);
-		if (filename == "") break;
+		CallbackInfo cb;
+		cb.mainFTP = this;
+		cb.path = path_each;
+		openDataPort(GetFileList::before, GetFileList::after, cb);
 
-		cout << "Get " << filename << "?(y-yes/else-no): ";
+		stringstream forSplitFile(cb.path);
+		string filename;
+		string cmd;
 
-		cin.sync(); //flush \n
-		getline(cin, cmd);
-		if (cmd == "y" || cmd == "yes") {
-			this->downFile(filename);
-		}
-		else {
-			//do nothing
+		while (!forSplitFile.eof()) {
+			getline(forSplitFile, filename, '\r');
+			if (filename[0] == '\n') filename.erase(0, 1);
+			if (filename == "") break;
+
+			cout << "Get " << filename << "?(y-yes/else-no): ";
+
+			cin.sync(); //flush \n
+			getline(cin, cmd);
+			if (cmd == "y" || cmd == "yes") {
+				this->downFile(filename);
+			}
+			else {
+				//do nothing
+			}
 		}
 	}
 
