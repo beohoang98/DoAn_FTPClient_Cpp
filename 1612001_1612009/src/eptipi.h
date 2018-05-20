@@ -23,12 +23,14 @@ enum FTPCode {
 	CANNOT_OPEN_DATA_CONNECT = 425,
 
 	READY_TRANSFER = 150,
-
 	TRANSFER_SUCCESS = 226,
+
+	CWD_SUCCESS = 250,
+	CWD_FAILED = 550,
 
 	FILE_STATUS = 213,
 
-	CONNECT_FAILED = 421
+	DISCONNECT = 421
 };
 
 namespace FTPDataMode {
@@ -48,12 +50,13 @@ using namespace std;
 
 class Eptipi {
 private:
-	const wchar_t * servername;
+	wstring servername;
 
 	CSocket cmdConn; // command connection
 	int returnCode;
 	string returnStr;
 	int returnPort;
+	UCHAR isConnect;
 
 	UCHAR dataMode;
 	UCHAR fileMode;
@@ -88,10 +91,10 @@ public:
 	void handleCmd(string cmd, string path);
 
 	//main command
-	void lietKeChiTiet(); // dir
-	void lietKeDonGian(); // ls
-	void lietKeClientChiTiet(); //ldir
-	void lietKeClientDonGian(); //lls
+	void lietKeChiTiet(string path); // dir
+	void lietKeDonGian(string path); // ls
+	void lietKeClientChiTiet(string path); //ldir
+	void lietKeClientDonGian(string path); //lls
 	
 	void changeServerDir(string path); // cd
 	void changeClientDir(string path); // lcd
@@ -144,6 +147,23 @@ struct cmdDescription {
 };
 const map<string, cmdDescription> listCmd = {
 	{
+		"open",
+		cmdDescription{
+			"Ket noi server",
+			
+			"open [server name] - ket noi den dia chi [server name]"
+		}
+	},
+	{
+		"help",
+		cmdDescription{
+			"Hien thi thong tin cua ham",
+
+			"help - thong tin tat ca ca ham\n"
+			"help [cmd] - thong tin cho ham [cmd]"
+		}
+	},
+	{
 		"dir",
 		cmdDescription{
 			"liet ke chi tiet thu muc tren server",
@@ -175,14 +195,14 @@ const map<string, cmdDescription> listCmd = {
 		"cd",
 		cmdDescription{
 			"thay doi duong dan tren server",
-			R"(	cd [duong dan] de thay doi working dir den [duong dan])"
+			"\tcd [duong dan] de thay doi working dir den [duong dan]"
 		}
 	},
 	{
 		"lcd",
 		cmdDescription{
 			"thay doi duong dan o client",
-			R"(	lcd [duong dan] de thay doi working dir den [duong dan])"
+			"\tlcd [duong dan] de thay doi working dir den [duong dan]"
 		}
 	},
 	{
@@ -196,17 +216,20 @@ const map<string, cmdDescription> listCmd = {
 		"get",
 		cmdDescription{
 			"download file ve client",
-			R"(	get [ten file] - de download file [ten file] tren )""\n"
-			R"(		server ve path hien tai cua client)"
+
+			"\tget [ten file] - de download file [ten file] tren )\n"
+			"\t\tserver ve path hien tai cua client"
 		}
 	},
 	{
 		"mget",
 		cmdDescription{
 			"mget [expr] - download nhieu file thoa man [expr]",
-			R"(	[expr] co the la:)""\n"
-			R"(	- *.txt)""\n"
-			R"(	- folder/*.*)""\n	..."
+			
+			"\t[expr] co the la:\n"
+			"\t- *.txt\n"
+			"\t- folder/*.*\n"
+			"\t..."
 		}
 	},
 	{
@@ -227,8 +250,9 @@ const map<string, cmdDescription> listCmd = {
 		"mode",
 		cmdDescription{
 			"set mode to BINARY or ASCII",
-			R"(	A - ASCII mode)""\n"
-			R"(	I - BINARY mode)"
+			
+			"\tA - ASCII mode\n"
+			"\tI - BINARY mode"
 		}
 	},
 	{ 
@@ -236,6 +260,41 @@ const map<string, cmdDescription> listCmd = {
 		cmdDescription{
 			"thoat ftp",
 			""
+		}
+	},
+	{
+		"del",
+		cmdDescription{
+			"Xoa file tren server",
+			
+			"\tmdel [ten-file] - xoa file [ten-file]"
+		}
+	},
+	{
+		"mdel",
+		cmdDescription{
+			"Xoa nhieu file tren server",
+
+			"\tmdel [expr...] - xoa file thoa man [expr...]\n"
+			"\t- mdel *.txt *.asd - xoa het file .txt va .asd\n"
+			"\t- ..."
+		}
+	},
+	{
+		"rmdir",
+		cmdDescription{
+			"Xoa thu muc trong",
+
+			"\trmdir [tenfolder] - Xoa thu muc [tenfolder]\n"
+			"\t- Neu thu muc khong rong, khong xoa dc"
+		}
+	},
+	{
+		"mkdir",
+		cmdDescription{
+			"Tao thu muc moi",
+
+			"\tmkdir [tenfolder] - Tao thu muc moi co ten [tenfolder]"
 		}
 	}
 };

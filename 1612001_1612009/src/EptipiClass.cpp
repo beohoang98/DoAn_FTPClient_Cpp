@@ -10,6 +10,7 @@ Eptipi::Eptipi() {
 	this->returnCode = -1;
 	this->returnPort = -1;
 	this->returnStr = "";
+	this->isConnect = false;
 
 	this->dataMode = FTPDataMode::DEFAULT;//passive
 	this->fileMode = FTPFileMode::DEFAULT;//binary
@@ -21,13 +22,18 @@ Eptipi::Eptipi() {
 void Eptipi::connectServer(const wchar_t * serverAddr) 
 {
 	cmdConn.Create();
-
-	int isConnect = cmdConn.Connect(serverAddr, 21);
-
-	if (!isConnect) {
-		wstring s = wstring(L"Khong the ket noi den server ") + serverAddr;
-		throw l_exception(s.c_str());
+	
+	cout << "Wait..." << endl;
+	this->isConnect = cmdConn.Connect(serverAddr, 21);
+	
+	if (!this->isConnect) {
+		cout << "Khong the ket noi den ";
+		wcout << serverAddr << endl;
+		cmdConn.Close();
+		return;
 	}
+
+	cout << "Connect OK..." << endl;
 	this->servername = serverAddr;
 		
 	char buffer[BUFFER_LENGTH];
@@ -202,16 +208,21 @@ bool Eptipi::receiveOneLine() {
 	//split return port
 	if (this->returnCode == FTPCode::OPEN_PASV_PORT) {
 		//227 Entering Passive Mode (h1,h2,h3,h4,p1,p0)
-		int unusedInt, p1, p0;
+		int h1, h2, h3, h4, p1, p0;
 		char comma;
-		ss >> unusedInt >> comma >> unusedInt >> comma
-			>> unusedInt >> comma >> unusedInt >> comma
+		ss >> h1 >> comma >> h2 >> comma
+			>> h3 >> comma >> h4 >> comma
 			>> p1 >> comma >> p0;
 
 		if (ss.fail())
 			this->returnPort = -1;
-		else
+		else {
 			this->returnPort = p1 * 256 + p0;
+			this->servername = to_wstring(h1) + L"." 
+				+ to_wstring(h2) + L"."
+				+ to_wstring(h3) + L"."
+				+ to_wstring(h4);
+		}	
 	}
 	else if (this->returnCode == FTPCode::OPEN_ESPV_PORT) {
 		// 227 Entering Extented Passive Mode (address, port)
@@ -328,7 +339,7 @@ CSocket * Eptipi::openPassivePortAndConnect() {
 	if (!newSocket->Create()) {
 		return NULL;
 	}
-	if (!newSocket->Connect(this->servername, (UINT)this->getReturnPort())) {
+	if (!newSocket->Connect(this->servername.c_str(), (UINT)this->getReturnPort())) {
 		return NULL;
 	}
 
@@ -352,7 +363,7 @@ void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConn
 		if (transferPort != NULL) {
 			isResponseOK = beforeConnect(cb);
 			
-			if (!transferPort->Accept(server, (SOCKADDR*)this->servername))
+			if (!transferPort->Accept(server, (SOCKADDR*)this->servername.c_str()))
 			{
 				afterConnect(cb);
 			}
@@ -376,9 +387,11 @@ void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConn
 			afterConnect(cb);
 	}
 
-	transferPort->Close();
-	delete transferPort;
-
+	if (transferPort != NULL) {
+		transferPort->Close();
+		delete transferPort;
+	}
+	
 	if (isResponseOK) {
 		this->receiveOneLine();
 		cout << "\t" << getReturnStr() << endl;
@@ -394,26 +407,76 @@ void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConn
 */
 void Eptipi::handleCmd(string cmd, string path) 
 {
-	if (path == "--help") {
-		this->showHelpFor(cmd);
+	//check cmd exist
+	if (listCmd.find(cmd) == listCmd.end()) {
+		cout << "\tunknown command, type help to show all command\n\n";
 		return;
 	}
-	
-	if (cmd == "dir")
+
+	//do cmd dont need connected
+	if (cmd == "open") {
+		if (path == "") {
+			showHelpFor(cmd);
+			return;
+		}
+
+		wstring wPath(path.begin(), path.end());
+		this->connectServer(wPath.c_str());
+
+		if (this->isConnect) {
+			while (!this->login()) {
+				cout << "\tDang nhap lai:\n" << endl;
+			}
+		}
+	}
+	else if (cmd == "quit" || cmd == "bye" || cmd == "disconnect")
+	{
+		if (isConnect) {
+			this->sendCmd("QUIT\r\n");
+			this->receiveOneLine();
+			cout << this->getReturnStr() << endl;
+			
+			this->cmdConn.Close();
+			this->isConnect = false;
+			this->servername = L"";
+		}
+		return;
+	}
+	else if (cmd == "help") {
+		if (path == "")
+			this->showAllCmd();
+		else
+			this->showHelpFor(path);
+		return;
+	}
+	else if (cmd == "") {
+		//do nothing
+		return;
+	}
+
+
+	//check connect for commands need connection
+	if (!this->isConnect) {
+		cout << "\tBan chua ket noi den server\n"
+			<< "\tGoi lenh open de ket noi den server\n"
+			<< endl;
+		return;
+	}
+	else if (cmd == "dir")
 	{ // liet ke chi tiet folder va file tren server
-		this->lietKeChiTiet();
+		this->lietKeChiTiet(path);
 	}
 	else if (cmd == "ls")
 	{// liet ke ten folder va file tren server
-		this->lietKeDonGian();
+		this->lietKeDonGian(path);
 	}
-	if (cmd == "ldir")
+	else if (cmd == "ldir")
 	{ // liet ke chi tiet folder va file o Client
-		this->lietKeClientChiTiet();
+		this->lietKeClientChiTiet(path);
 	}
 	else if (cmd == "lls")
 	{// liet ke ten folder va file o Client
-		this->lietKeClientDonGian();
+		this->lietKeClientDonGian(path);
 	}
 	else if (cmd == "cd")
 	{// thay doi duong dan tren server
@@ -433,19 +496,31 @@ void Eptipi::handleCmd(string cmd, string path)
 	}
 	else if (cmd == "put")
 	{// up file len server
-		this->upFile(path);
+		if (path == "")
+			showHelpFor(cmd);
+		else
+			this->upFile(path);
 	}
 	else if (cmd == "mput")
 	{// up nhieu file len server
-		this->upNhieuFile(path);
+		if (path == "")
+			showHelpFor(cmd);
+		else
+			this->upNhieuFile(path);
 	}
 	else if (cmd == "get")
 	{// down file ve client
-		this->downFile(path);
+		if (path == "")
+			showHelpFor(cmd);
+		else
+			this->downFile(path);
 	}
 	else if (cmd == "mget")
 	{// up nhieu file len server
-		this->downNhieuFile(path);
+		if (path == "")
+			showHelpFor(cmd);
+		else
+			this->downNhieuFile(path);
 	}
 	else if (cmd == "type")
 	{
@@ -457,9 +532,7 @@ void Eptipi::handleCmd(string cmd, string path)
 			this->showHelpFor(cmd);
 		}
 		else {
-			cout << "\tType khong hop le" << endl
-				<< "\tType hop le bao gom: A - ASCII, I - BINARY"
-				<< endl << endl;
+			showHelpFor(cmd);
 		}
 	}
 	else if (cmd == "mode")
@@ -471,24 +544,24 @@ void Eptipi::handleCmd(string cmd, string path)
 			this->switchToPassive();
 		}
 		else {
-			cout << "\tMode khong hop le" << endl;
-			this->showHelpFor("mode");
+			showHelpFor("mode");
 		}
 	}
-	else if (cmd == "quit")
+	else if (cmd == "del")
 	{
-		this->sendCmd("QUIT\r\n");
-		this->receiveOneLine();
-		cout << this->getReturnStr() << endl;
+		this->xoaFile(path);
 	}
-	else if (cmd == "help") {
-		this->showAllCmd();
+	else if (cmd == "rmdir")
+	{
+		this->xoaFolder(path);
 	}
-	else if (cmd == "") {
-		//do nothing
+	else if (cmd == "mkdir")
+	{
+		this->taoFolder(path);
 	}
-	else {
-		cout << "\tunknown command, type help to show all command\n\n";
+	else if (cmd == "pwd")
+	{
+		this->printServerPath();
 	}
 }
 
