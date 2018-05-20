@@ -30,7 +30,7 @@ enum FTPCode {
 
 	FILE_STATUS = 213,
 
-	CONNECT_FAILED = 421
+	DISCONNECT = 421
 };
 
 namespace FTPDataMode {
@@ -90,10 +90,10 @@ public:
 	void handleCmd(string cmd, string path);
 
 	//main command
-	void lietKeChiTiet(); // dir
-	void lietKeDonGian(); // ls
-	void lietKeClientChiTiet(); //ldir
-	void lietKeClientDonGian(); //lls
+	void lietKeChiTiet(string path); // dir
+	void lietKeDonGian(string path); // ls
+	void lietKeClientChiTiet(string path); //ldir
+	void lietKeClientDonGian(string path); //lls
 	
 	void changeServerDir(string path); // cd
 	void changeClientDir(string path); // lcd
@@ -177,14 +177,14 @@ const map<string, cmdDescription> listCmd = {
 		"cd",
 		cmdDescription{
 			"thay doi duong dan tren server",
-			R"(	cd [duong dan] de thay doi working dir den [duong dan])"
+			"	cd [duong dan] de thay doi working dir den [duong dan]"
 		}
 	},
 	{
 		"lcd",
 		cmdDescription{
 			"thay doi duong dan o client",
-			R"(	lcd [duong dan] de thay doi working dir den [duong dan])"
+			"	lcd [duong dan] de thay doi working dir den [duong dan]"
 		}
 	},
 	{
@@ -198,17 +198,20 @@ const map<string, cmdDescription> listCmd = {
 		"get",
 		cmdDescription{
 			"download file ve client",
-			R"(	get [ten file] - de download file [ten file] tren )""\n"
-			R"(		server ve path hien tai cua client)"
+
+			"	get [ten file] - de download file [ten file] tren )\n"
+			"		server ve path hien tai cua client"
 		}
 	},
 	{
 		"mget",
 		cmdDescription{
 			"mget [expr] - download nhieu file thoa man [expr]",
-			R"(	[expr] co the la:)""\n"
-			R"(	- *.txt)""\n"
-			R"(	- folder/*.*)""\n	..."
+			
+			"	[expr] co the la:\n"
+			"	- *.txt\n"
+			"	- folder/*.*\n"
+			"	..."
 		}
 	},
 	{
@@ -229,8 +232,9 @@ const map<string, cmdDescription> listCmd = {
 		"mode",
 		cmdDescription{
 			"set mode to BINARY or ASCII",
-			R"(	A - ASCII mode)""\n"
-			R"(	I - BINARY mode)"
+			
+			"	A - ASCII mode\n"
+			"	I - BINARY mode"
 		}
 	},
 	{ 

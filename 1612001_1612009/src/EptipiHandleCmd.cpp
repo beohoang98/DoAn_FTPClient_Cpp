@@ -12,16 +12,12 @@ using namespace std;
 	dir
 	@liet ke chi tiet thu muc tren server
 */
-void Eptipi::lietKeChiTiet()
+void Eptipi::lietKeChiTiet(string path)
 {
 	struct deKhaiBaoHam {
-
-		/*
-			thuc hien cau lenh de su dung data port
-			@param (cb) du lieu luu lai de callback
-		*/
+		
 		static bool before(CallbackInfo &cb) {
-			cb.mainFTP->sendCmd("LIST\r\n");
+			cb.mainFTP->sendCmd("LIST "+cb.path+"\r\n");
 			cb.mainFTP->receiveOneLine();
 			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
 
@@ -30,10 +26,6 @@ void Eptipi::lietKeChiTiet()
 			return true;
 		};
 
-		/*
-			thuc hien sau khi port duoc connect thanh cong
-			@param (cb) du lieu callback luu lai bao gom dataCon(data port da connect)
-		*/
 		static void after(CallbackInfo &cb) {
 			if (cb.dataCon == NULL) return;
 
@@ -50,6 +42,7 @@ void Eptipi::lietKeChiTiet()
 	this->receiveOneLine();
 
 	CallbackInfo cb;
+	cb.path = path;
 	cb.mainFTP = this;
 	openDataPort(deKhaiBaoHam::before, deKhaiBaoHam::after, cb);
 }
@@ -58,7 +51,7 @@ void Eptipi::lietKeChiTiet()
 	ls
 	@liet ke ten cac thu muc va file tren server
 */
-void Eptipi::lietKeDonGian()
+void Eptipi::lietKeDonGian(string path)
 {
 	struct ASD {
 		/*
@@ -66,7 +59,7 @@ void Eptipi::lietKeDonGian()
 		@param (cb) du lieu luu lai de callback
 		*/
 		static bool before(CallbackInfo &cb) {
-			cb.mainFTP->sendCmd("NLST\r\n");
+			cb.mainFTP->sendCmd("NLST " + cb.path +"\r\n");
 			cb.mainFTP->receiveOneLine();
 			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
 
@@ -95,26 +88,25 @@ void Eptipi::lietKeDonGian()
 
 	CallbackInfo cb;
 	cb.mainFTP = this;
+	cb.path = path;
 	openDataPort(ASD::before, ASD::after, cb);
 }
  
 /*
 ldir
 */
-void Eptipi::lietKeClientChiTiet()
+void Eptipi::lietKeClientChiTiet(string path)
 {
-	cout << "\tClient dir:\n\n";
-	system("dir");
+	system(("dir "+path).c_str());
 	cout << endl;
 }
 
 /*
 lls
 */
-void Eptipi::lietKeClientDonGian()
+void Eptipi::lietKeClientDonGian(string path)
 {
-	cout << "\tClient dir:\n\n";
-	system("dir /b");
+	system(("dir /b "+path).c_str());
 	cout << endl;
 }
 

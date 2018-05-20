@@ -401,19 +401,19 @@ void Eptipi::handleCmd(string cmd, string path)
 	
 	if (cmd == "dir")
 	{ // liet ke chi tiet folder va file tren server
-		this->lietKeChiTiet();
+		this->lietKeChiTiet(path);
 	}
 	else if (cmd == "ls")
 	{// liet ke ten folder va file tren server
-		this->lietKeDonGian();
+		this->lietKeDonGian(path);
 	}
-	if (cmd == "ldir")
+	else if (cmd == "ldir")
 	{ // liet ke chi tiet folder va file o Client
-		this->lietKeClientChiTiet();
+		this->lietKeClientChiTiet(path);
 	}
 	else if (cmd == "lls")
 	{// liet ke ten folder va file o Client
-		this->lietKeClientDonGian();
+		this->lietKeClientDonGian(path);
 	}
 	else if (cmd == "cd")
 	{// thay doi duong dan tren server
@@ -475,14 +475,17 @@ void Eptipi::handleCmd(string cmd, string path)
 			this->showHelpFor("mode");
 		}
 	}
-	else if (cmd == "quit")
+	else if (cmd == "quit" || cmd == "bye" || cmd == "disconnect")
 	{
 		this->sendCmd("QUIT\r\n");
 		this->receiveOneLine();
 		cout << this->getReturnStr() << endl;
 	}
 	else if (cmd == "help") {
-		this->showAllCmd();
+		if (path == "")
+			this->showAllCmd();
+		else
+			this->showHelpFor(path);
 	}
 	else if (cmd == "") {
 		//do nothing
