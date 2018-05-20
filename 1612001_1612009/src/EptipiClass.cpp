@@ -443,6 +443,18 @@ void Eptipi::handleCmd(string cmd, string path)
 	else if (cmd == "") {
 		//do nothing
 	}
+	else if (cmd == "del")
+	{
+		this->xoaFile(path);
+	}
+	else if (cmd == "rmdir")
+	{
+		this->xoaFolder(path);
+	}
+	else if (cmd == "mkdir")
+	{
+		this->taoFolder(path);
+	}
 	else {
 		cout << "\tunknown command, type help to show all command\n\n";
 	}

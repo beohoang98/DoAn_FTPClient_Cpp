@@ -119,11 +119,13 @@ void Eptipi::lietKeClientDonGian()
 }
 
 /*------------------------------------------
-
+cd
 */
 void Eptipi::changeServerDir(string path)
 {
-
+	this->sendCmd("CWD "+path+"\r\n"); //ascii mode
+	this->receiveOneLine();
+	cout << this->getReturnStr() << endl;
 }
  
 /*------------------------------------------
@@ -343,4 +345,25 @@ void Eptipi::showAllCmd() {
 			<< cmd.second << endl;
 	}
 	cout << endl;
+}
+
+void Eptipi::xoaFile(string filename)
+{
+	this->sendCmd("DELE " + filename + "\r\n"); //ascii mode
+	this->receiveOneLine();
+	cout << this->getReturnStr() << endl;
+}
+
+void Eptipi::xoaFolder(string tenfolder)
+{
+	this->sendCmd("XRMD " + tenfolder + "\r\n"); //ascii mode
+	this->receiveOneLine();
+	cout << this->getReturnStr() << endl;
+}
+
+void Eptipi::taoFolder(string tenfolder)
+{
+	this->sendCmd("XMKD " + tenfolder + "\r\n"); //ascii mode
+	this->receiveOneLine();
+	cout << this->getReturnStr() << endl;
 }
