@@ -48,14 +48,12 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 				stringstream to_split_input;
 				string user_cmd, user_path;
 
-				if (argc > 2) 
+				if (argc > 2) {
 					Client.connectServer(argv[1]);
-				else
-					Client.connectServer(default_servername);
-
-				while (!Client.login())
-				{
-					cout << "Moi ban dang nhap lai" << endl;
+					while (!Client.login())
+					{
+						cout << "Moi ban dang nhap lai" << endl;
+					}
 				}
 
 				while (true) {

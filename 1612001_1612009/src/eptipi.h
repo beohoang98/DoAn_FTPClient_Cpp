@@ -56,6 +56,7 @@ private:
 	int returnCode;
 	string returnStr;
 	int returnPort;
+	UCHAR isConnect;
 
 	UCHAR dataMode;
 	UCHAR fileMode;
@@ -145,6 +146,23 @@ struct cmdDescription {
 	string title, description;
 };
 const map<string, cmdDescription> listCmd = {
+	{
+		"open",
+		cmdDescription{
+			"Ket noi server",
+			
+			"open [server name] - ket noi den dia chi [server name]"
+		}
+	},
+	{
+		"help",
+		cmdDescription{
+			"Hien thi thong tin cua ham",
+
+			"help - thong tin tat ca ca ham\n"
+			"help [cmd] - thong tin cho ham [cmd]"
+		}
+	},
 	{
 		"dir",
 		cmdDescription{
