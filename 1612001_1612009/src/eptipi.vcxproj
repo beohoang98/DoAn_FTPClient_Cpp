@@ -83,6 +83,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ConsoleOutput.h" />
     <ClInclude Include="eptipi.h" />
     <ClInclude Include="EptipiCommand.h" />
     <ClInclude Include="EptipiConstants.h" />
@@ -91,6 +92,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConsoleOutput.cpp" />
     <ClCompile Include="eptipi.cpp" />
     <ClCompile Include="EptipiClass.cpp" />
     <ClCompile Include="EptipiHandleCmd.cpp" />

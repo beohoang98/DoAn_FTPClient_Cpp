@@ -11,6 +11,8 @@
 #include <conio.h>
 #include <sstream>
 
+#include "ConsoleOutput.h"
+
 using namespace std;
 
 /* ======================================================= */
@@ -107,7 +109,7 @@ bool Eptipi::login()
 
 	this->sendCmd("USER " + name + "\r\n");
 	this->receiveOneLine();
-	cout << "\t" << getReturnStr() << endl;
+	ftpStt << getReturnStr() << "\n";
 
 	//password
 	cout << "password: " << endl;
@@ -115,14 +117,14 @@ bool Eptipi::login()
 
 	this->sendCmd("PASS " + pass + "\r\n");
 	this->receiveOneLine();
-	cout << "\t" << getReturnStr() << endl;
+	ftpStt << getReturnStr() << "\n";
 
 	if (getCode() == FTPCode::LOGIN_SUCCESS) {
-		cout << "\tLogin success\n\n";
+		cout << "Login success\n\n";
 		return true;
 	}
 	else {
-		cout << "\tLogin failed\n\n";
+		cout << "Login failed\n\n";
 		return false;
 	}
 }
@@ -400,7 +402,7 @@ void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConn
 	
 	if (isResponseOK) {
 		this->receiveOneLine();
-		cout << "\t" << getReturnStr() << endl;
+		ftpStt << getReturnStr() << "\n";
 	}
 }
 
@@ -431,7 +433,7 @@ void Eptipi::handleCmd(string cmd, string path)
 
 		if (this->isConnect) {
 			while (!this->login()) {
-				cout << "\tDang nhap lai:\n" << endl;
+				cout << "Dang nhap lai:\n" << endl;
 			}
 		}
 	}
@@ -440,7 +442,7 @@ void Eptipi::handleCmd(string cmd, string path)
 		if (isConnect) {
 			this->sendCmd("QUIT\r\n");
 			this->receiveOneLine();
-			cout << this->getReturnStr() << endl;
+			ftpStt << getReturnStr() << "\n";
 			
 			this->cmdConn.Close();
 			this->isConnect = false;
@@ -463,8 +465,8 @@ void Eptipi::handleCmd(string cmd, string path)
 
 	//check connect for commands need connection
 	if (!this->isConnect) {
-		cout << "\tBan chua ket noi den server\n"
-			<< "\tGoi lenh open de ket noi den server\n"
+		cout << "Ban chua ket noi den server\n"
+			<< "Goi lenh open de ket noi den server\n"
 			<< endl;
 		return;
 	}
