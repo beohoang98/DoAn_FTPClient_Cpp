@@ -1,8 +1,15 @@
+/**
+ * Source nay de define cac ham xu ly lenh ftp
+ * 
+ * Created by BeoHoang
+*/
+
 #pragma once
 
 #include "stdafx.h"
 #include "eptipi.h"
 #include <fstream>
+#include <sstream>
 #include <iomanip>
 
 using namespace std;
@@ -181,11 +188,12 @@ void Eptipi::downFile(string fileName)
 				os << char(219);
 			for (int i = 0; i < 20 - showLength; ++i)
 				os << '-';
-			os << "] " << cur/1024 << "/" << size/1024 << "KB ";
-			os << setw(4) << speed/1024 << "KB/s ";
+			os << "] " << (cur >> 10) << "/" << (size >> 10) << "KB ";
+			os << setw(4) << (speed >> 10) << "KB/s ";
+
 			os << setw(2) << esTime / 3600 << "h" 
-				<< setw(2) << (esTime % 3600) / 60 << "m" 
-				<< setw(2) << (esTime % 60) << "s";
+				<< setw(2) << (esTime / 60) % 60 << "m" 
+				<< setw(2) << esTime % 60 << "s";
 		}
 		/*
 		thuc hien cau lenh de su dung data port
@@ -358,7 +366,7 @@ void Eptipi::downNhieuFile(string fileNames)
  
 
 void Eptipi::showAllCmd() {
-	for (auto cmd : listCmd) {
+	for (auto cmd : FTPCommand::listCmd) {
 		cout << '\t' << setw(20) << left 
 			<< cmd.first
 			<< " : " 
@@ -369,9 +377,9 @@ void Eptipi::showAllCmd() {
 
 
 void Eptipi::showHelpFor(string cmd) {
-	auto info = listCmd.find(cmd);
+	auto info = FTPCommand::listCmd.find(cmd);
 	
-	if (info == listCmd.end()) {
+	if (info == FTPCommand::listCmd.end()) {
 		cout << "\tkhong tim thay " << cmd << "\n\n";
 		return;
 	}

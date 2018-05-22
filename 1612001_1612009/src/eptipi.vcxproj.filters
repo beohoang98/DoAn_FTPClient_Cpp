@@ -30,6 +30,12 @@
     <ClInclude Include="eptipi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="EptipiCommand.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EptipiConstants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
