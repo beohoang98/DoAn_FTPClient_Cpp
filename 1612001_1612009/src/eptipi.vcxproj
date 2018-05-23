@@ -81,6 +81,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
+    <Text Include="testServer.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="eptipi.h" />

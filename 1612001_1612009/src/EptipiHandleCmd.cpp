@@ -28,7 +28,8 @@ void Eptipi::lietKeChiTiet(string path)
 			cb.mainFTP->receiveOneLine();
 			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
 
-			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
+			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER 
+				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
 				return false;
 			return true;
 		};
@@ -70,7 +71,8 @@ void Eptipi::lietKeDonGian(string path)
 			cb.mainFTP->receiveOneLine();
 			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
 
-			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
+			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER
+				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
 				return false;
 			return true;
 		};
@@ -227,7 +229,8 @@ void Eptipi::downFile(string fileName)
 			cb.mainFTP->receiveOneLine();
 			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
 
-			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
+			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER
+				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
 				return false;
 			return true;
 		};
@@ -303,7 +306,8 @@ void Eptipi::downNhieuFile(string fileNames)
 			cb.mainFTP->receiveOneLine();
 			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
 
-			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
+			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER
+				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
 				return false;
 			return true;
 		};

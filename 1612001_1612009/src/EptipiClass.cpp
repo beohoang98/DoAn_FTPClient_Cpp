@@ -324,15 +324,19 @@ CSocket * Eptipi::openPassivePortAndConnect() {
 	//try normal PASV
 	this->sendCmd("PASV\r\n");
 	this->receiveOneLine();
+	cout << '\t' << getReturnStr() << endl;
+
 	if (this->getReturnPort() == -1) {
 		//try EPSV
-		this->sendCmd("ESPV\r\n");
+		this->sendCmd("EPSV\r\n");
 		this->receiveOneLine();
+		cout << '\t' << getReturnStr() << endl;
 
 		if (this->getReturnPort() == -1) {
 			//try LPSV
-			this->sendCmd("LSPV\r\n");
+			this->sendCmd("LPSV\r\n");
 			this->receiveOneLine();
+			cout << '\t' << getReturnStr() << endl;
 		}
 	}
 
