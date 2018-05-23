@@ -175,30 +175,6 @@ void Eptipi::upFile(string fileName)
 void Eptipi::downFile(string fileName)
 {
 	struct ASD {
-		/*static void showPercent(ostream &os, UINT64 cur, UINT64 size, clock_t time) {
-			UINT64 showLength = cur * 20 / size;
-			if (showLength > 20) showLength = 20;
-			
-			UINT64 speed;
-			time_t esTime = 0;
-			if (time > 0) {
-				speed = cur * CLOCKS_PER_SEC / time;
-				esTime = (size - cur) / speed;
-			}
-			else speed = 0;
-
-			os << "\r\t[";
-			for (int i = 0; i < showLength; ++i)
-				os << char(219);
-			for (int i = 0; i < 20 - showLength; ++i)
-				os << '-';
-			os << "] " << (cur >> 10) << "/" << (size >> 10) << "KB ";
-			os << setw(4) << (speed >> 10) << "KB/s ";
-
-			os << setw(2) << esTime / 3600 << "h" 
-				<< setw(2) << (esTime / 60) % 60 << "m" 
-				<< setw(2) << esTime % 60 << "s";
-		}*/
 		/*
 		thuc hien cau lenh de su dung data port
 		@param (cb) du lieu luu lai de callback
@@ -245,7 +221,8 @@ void Eptipi::downFile(string fileName)
 		{
 			if (cb.dataCon == NULL)
 				return;
-			int filesize = 0;
+			UINT64 filesize = 0;
+
 			int bytes = 0;
 			char buffer[BUFFER_LENGTH];
 			memset(buffer, 0, BUFFER_LENGTH);
