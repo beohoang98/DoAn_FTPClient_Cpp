@@ -37,6 +37,9 @@
     <ClInclude Include="EptipiConstants.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ProgressBar.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -49,6 +52,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="EptipiHandleCmd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ProgressBar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
