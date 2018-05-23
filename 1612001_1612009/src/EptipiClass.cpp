@@ -46,15 +46,14 @@ void Eptipi::connectServer(const wchar_t * serverAddr)
 	}
 
 	cout << "Connect OK..." << endl;
-	this->server_addr.assign(&serverAddr[0], &serverAddr[wcslen(serverAddr)-1]);
+	this->server_addr.assign(&serverAddr[0], &serverAddr[wcslen(serverAddr)]);
 		
-	char buffer[BUFFER_LENGTH];
-	memset(buffer, 0, BUFFER_LENGTH);
-	cmdConn.Receive(buffer, BUFFER_LENGTH-1, 0);
-	cout << buffer << endl;
+	this->receiveOneLine();
+	cout << this->getReturnStr() << endl;
 
 	this->sendCmd("OPTS UTF8 ON\r\n");
 	this->receiveOneLine();
+	cout << this->getReturnStr() << endl;
 
 	CString hostname_buf;
 	UINT port; // unused
@@ -179,31 +178,43 @@ bool Eptipi::receiveAll() {
 bool Eptipi::receiveOneLine() {
 	stringstream ss; // for split return string
 	string unusedStr;
-
+	int isContinueStatus = false;
+	char charNextToCode = '\0';
 	char buffer[BUFFER_LENGTH];
+	char * pos = NULL;
+
+	this->returnStr = "";
+	this->returnCode = -1;
+	this->returnPort = -1;
+
+//LABEL
+receiveOneLine_Repeat:
+
 	memset(buffer, 0, BUFFER_LENGTH);
-	char * pos = buffer;
+	pos = &buffer[0];
 
 	while (cmdConn.Receive(pos, 1)) {
-		char c = pos[0];
-		pos++;
+		char c = *pos;
 
 		if (c == '\n') {
 			break;
 		}
+
+		pos++;
 	}
 	if (pos == buffer) {
 		//disconnect to server
 		return false;
 	}
 
-	this->returnStr = buffer;
-	this->returnCode = -1;
-	this->returnPort = -1;
+	this->returnStr += buffer;
 
 	//split code
 	ss = stringstream(buffer);
 	ss >> this->returnCode;
+	ss >> charNextToCode;
+	isContinueStatus = (charNextToCode == '-');
+
 	//split string
 	getline(ss, unusedStr, '(');
 	//split return port
@@ -240,6 +251,10 @@ bool Eptipi::receiveOneLine() {
 		cmdConn.Close();
 		this->isConnect = false;
 	}
+
+//CHECK TO REPEAT LABEL
+	if (isContinueStatus)
+		goto receiveOneLine_Repeat;
 
 	return true;
 }
