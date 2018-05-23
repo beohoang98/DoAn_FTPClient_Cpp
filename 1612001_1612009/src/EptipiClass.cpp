@@ -48,11 +48,11 @@ void Eptipi::connectServer(const wchar_t * serverAddr)
 	cout << "Connect OK..." << endl;
 	this->server_addr.assign(&serverAddr[0], &serverAddr[wcslen(serverAddr)]);
 		
-	this->receiveOneLine();
+	this->receiveStatus();
 	cout << this->getReturnStr() << endl;
 
 	this->sendCmd("OPTS UTF8 ON\r\n");
-	this->receiveOneLine();
+	this->receiveStatus();
 	cout << this->getReturnStr() << endl;
 
 	CString hostname_buf;
@@ -105,7 +105,7 @@ bool Eptipi::login()
 	getline(cin, name);
 
 	this->sendCmd("USER " + name + "\r\n");
-	this->receiveOneLine();
+	this->receiveStatus();
 	cout << "\t" << getReturnStr() << endl;
 
 	//password
@@ -113,7 +113,7 @@ bool Eptipi::login()
 	readPassword(pass);
 
 	this->sendCmd("PASS " + pass + "\r\n");
-	this->receiveOneLine();
+	this->receiveStatus();
 	cout << "\t" << getReturnStr() << endl;
 
 	if (getCode() == FTPCode::LOGIN_SUCCESS) {
@@ -174,6 +174,8 @@ bool Eptipi::receiveAll() {
  * Ham nhan 1 dong status tu server tra ve
  * Sau do loc cac thong tin nhu code, port, status
  * roi luu lai vao cac member
+ * @return {true} neu van con status dang cho
+ * @return {false} neu da nhan het
 */
 bool Eptipi::receiveOneLine() {
 	stringstream ss; // for split return string
@@ -182,13 +184,6 @@ bool Eptipi::receiveOneLine() {
 	char charNextToCode = '\0';
 	char buffer[BUFFER_LENGTH];
 	char * pos = NULL;
-
-	this->returnStr = "";
-	this->returnCode = -1;
-	this->returnPort = -1;
-
-//LABEL
-receiveOneLine_Repeat:
 
 	memset(buffer, 0, BUFFER_LENGTH);
 	pos = &buffer[0];
@@ -212,6 +207,13 @@ receiveOneLine_Repeat:
 	//split code
 	ss = stringstream(buffer);
 	ss >> this->returnCode;
+
+	if (ss.fail()) {
+		//cannot read code
+		//co nghia la van con buffer chua doc het
+		return true;
+	}
+
 	ss >> charNextToCode;
 	isContinueStatus = (charNextToCode == '-');
 
@@ -252,13 +254,22 @@ receiveOneLine_Repeat:
 		this->isConnect = false;
 	}
 
-//CHECK TO REPEAT LABEL
-	if (isContinueStatus)
-		goto receiveOneLine_Repeat;
-
-	return true;
+	return isContinueStatus;
 }
 
+/**----------------------------------------------------------
+ * Ham nhan 1 status, bao gom nhieu dong (neu co)
+ * Update tu receiveOneLine()
+*/
+void Eptipi::receiveStatus()
+{
+	this->returnStr = "";
+	this->returnPort = -1;
+	this->returnCode = -1;
+
+	//repeat until server return [code][space][...]
+	while (receiveOneLine());
+}
 
 /*---------------------------------------------------
 	get return code after call Eptipi::receive
@@ -313,7 +324,7 @@ CSocket * Eptipi::openActivePortAndConnect() {
 
 	request << "PORT " << client_addr << "," << p1 << "," << p0 << "\r\n";
 	this->sendCmd(request.str());
-	this->receiveOneLine();
+	this->receiveStatus();
 
 	if (this->getCode() != FTPCode::COMMAND_SUCCESS) {
 		//server khong chap nhan port cua minh
@@ -338,19 +349,19 @@ CSocket * Eptipi::openPassivePortAndConnect() {
 	
 	//try normal PASV
 	this->sendCmd("PASV\r\n");
-	this->receiveOneLine();
+	this->receiveStatus();
 	cout << '\t' << getReturnStr() << endl;
 
 	if (this->getReturnPort() == -1) {
 		//try EPSV
 		this->sendCmd("EPSV\r\n");
-		this->receiveOneLine();
+		this->receiveStatus();
 		cout << '\t' << getReturnStr() << endl;
 
 		if (this->getReturnPort() == -1) {
 			//try LPSV
 			this->sendCmd("LPSV\r\n");
-			this->receiveOneLine();
+			this->receiveStatus();
 			cout << '\t' << getReturnStr() << endl;
 		}
 	}
@@ -418,7 +429,7 @@ void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConn
 	}
 	
 	if (isResponseOK) {
-		this->receiveOneLine();
+		this->receiveStatus();
 		cout << "\t" << getReturnStr() << endl;
 	}
 }
@@ -458,7 +469,7 @@ void Eptipi::handleCmd(string cmd, string path)
 	{
 		if (isConnect) {
 			this->sendCmd("QUIT\r\n");
-			this->receiveOneLine();
+			this->receiveStatus();
 			cout << this->getReturnStr() << endl;
 			
 			this->cmdConn.Close();

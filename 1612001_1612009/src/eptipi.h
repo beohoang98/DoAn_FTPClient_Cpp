@@ -43,14 +43,16 @@ protected:
 	CSocket * openActivePortAndConnect();
 	CSocket * openPassivePortAndConnect();
 	void openDataPort(bool(*)(CallbackInfo&), void(*)(CallbackInfo&), CallbackInfo&);
+	bool receiveAll();
+	bool receiveOneLine();
 
 public:
 	// ham co ban
 	void sendCmd(string cmd);
 	void sendCmd(wstring cmd);
-	bool receiveAll();
-	bool receiveOneLine();
+	void receiveStatus();
 
+	//get method
 	int getCode();
 	int getReturnPort();
 	string getReturnStr();
