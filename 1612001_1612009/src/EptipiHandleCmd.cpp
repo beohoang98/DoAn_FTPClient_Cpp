@@ -257,7 +257,9 @@ void Eptipi::downFile(string fileName)
 
 			clock_t startTm = clock();
 			clock_t countTm;
-			INT64 oldKB = 8 * 1024 * 1024; // cu moi~ 8MB se hien thi % download
+			const INT64 EACH_SHOW_B = 1024 * 1024; //1MB
+
+			INT64 oldKB = 0; // cu moi~ 80KB se hien thi % download
 			while ((bytes = cb.dataCon->Receive(buffer, BUFFER_LENGTH)) && bytes > 0) {
 				//write data to file
 				fileout.write(buffer, bytes);
@@ -267,7 +269,7 @@ void Eptipi::downFile(string fileName)
 				if (cb.filesize > 0 && filesize > oldKB) {
 					countTm = clock() - startTm;
 					ASD::showPercent(cout, filesize, cb.filesize, countTm);
-					oldKB += 1024 * 1024;
+					oldKB += EACH_SHOW_B;
 				}
 			}
 
