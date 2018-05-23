@@ -37,7 +37,7 @@ protected:
 		std::string path = "";
 		Eptipi * mainFTP = NULL;
 		CSocket * dataCon = NULL;
-		INT64 filesize = 0;
+		UINT64 filesize = 0;
 	};
 
 	CSocket * openActivePortAndConnect();

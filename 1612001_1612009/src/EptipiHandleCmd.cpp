@@ -12,6 +12,8 @@
 #include <sstream>
 #include <iomanip>
 
+#include "ProgressBar.h"
+
 using namespace std;
 
 
@@ -173,11 +175,11 @@ void Eptipi::upFile(string fileName)
 void Eptipi::downFile(string fileName)
 {
 	struct ASD {
-		static void showPercent(ostream &os, INT64 cur, INT64 size, clock_t time) {
-			INT64 showLength = cur * 20 / size;
+		/*static void showPercent(ostream &os, UINT64 cur, UINT64 size, clock_t time) {
+			UINT64 showLength = cur * 20 / size;
 			if (showLength > 20) showLength = 20;
 			
-			int speed;
+			UINT64 speed;
 			time_t esTime = 0;
 			if (time > 0) {
 				speed = cur * CLOCKS_PER_SEC / time;
@@ -196,7 +198,7 @@ void Eptipi::downFile(string fileName)
 			os << setw(2) << esTime / 3600 << "h" 
 				<< setw(2) << (esTime / 60) % 60 << "m" 
 				<< setw(2) << esTime % 60 << "s";
-		}
+		}*/
 		/*
 		thuc hien cau lenh de su dung data port
 		@param (cb) du lieu luu lai de callback
@@ -205,7 +207,7 @@ void Eptipi::downFile(string fileName)
 		{
 			string cmd;
 			char buffer[BUFFER_LENGTH] = { 0 };
-			INT64 filesize = 0;
+			UINT64 filesize = 0;
 
 			//get file size
 			cb.mainFTP->sendCmd("SIZE " + cb.path + "\r\n");
@@ -255,27 +257,24 @@ void Eptipi::downFile(string fileName)
 				return;
 			}
 
-			clock_t startTm = clock();
-			clock_t countTm;
-			const INT64 EACH_SHOW_B = 1024 * 1024; //1MB
+			ProgressBar display;
+			display.setBarSize(20);
+			display.setTotalSize(cb.filesize);
 
-			INT64 oldKB = 0; // cu moi~ 80KB se hien thi % download
 			while ((bytes = cb.dataCon->Receive(buffer, BUFFER_LENGTH)) && bytes > 0) {
 				//write data to file
 				fileout.write(buffer, bytes);
 				memset(buffer, 0, BUFFER_LENGTH);
 				filesize += bytes;
 
-				if (cb.filesize > 0 && filesize > oldKB) {
-					countTm = clock() - startTm;
-					ASD::showPercent(cout, filesize, cb.filesize, countTm);
-					oldKB += EACH_SHOW_B;
-				}
+				display.updateAndDraw(cout, filesize);
 			}
 
-			if (cb.filesize > 0) ASD::showPercent(cout, filesize, cb.filesize, 0);
+			//finally
+			display.update(cb.filesize);
+			if (cb.filesize > 0) display.draw(cout);
+
 			cout << endl;
-			
 			cout << "\tDownload " << cb.path << " successfully\n";
 			cout << "\tLength: " << filesize << "\n\n";
 			fileout.close();			
