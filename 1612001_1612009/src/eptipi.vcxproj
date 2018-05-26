@@ -83,19 +83,21 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ConsoleOutput.h" />
     <ClInclude Include="eptipi.h" />
     <ClInclude Include="EptipiCommand.h" />
     <ClInclude Include="EptipiConstants.h" />
+    <ClInclude Include="OutputClass\cmdOut.h" />
+    <ClInclude Include="OutputClass\ftpStt.h" />
+    <ClInclude Include="OutputClass\OutputClass.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ConsoleOutput.cpp" />
     <ClCompile Include="eptipi.cpp" />
     <ClCompile Include="EptipiClass.cpp" />
     <ClCompile Include="EptipiHandleCmd.cpp" />
+    <ClCompile Include="OutputClass\OutputClass.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

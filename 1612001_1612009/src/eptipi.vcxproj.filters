@@ -36,7 +36,13 @@
     <ClInclude Include="EptipiConstants.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ConsoleOutput.h">
+    <ClInclude Include="OutputClass\ftpStt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OutputClass\OutputClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OutputClass\cmdOut.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -53,7 +59,7 @@
     <ClCompile Include="EptipiHandleCmd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ConsoleOutput.cpp">
+    <ClCompile Include="OutputClass\OutputClass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -11,7 +11,8 @@
 #include <conio.h>
 #include <sstream>
 
-#include "ConsoleOutput.h"
+#include "OutputClass/ftpStt.h"
+#include "OutputClass/cmdOut.h"
 
 using namespace std;
 
@@ -37,23 +38,29 @@ void Eptipi::connectServer(const wchar_t * serverAddr)
 {
 	cmdConn.Create();
 	
-	cout << "Wait..." << endl;
+	cmdOut << "Wait...\n";
+	cmdOut.flush();
 	this->isConnect = cmdConn.Connect(serverAddr, 21);
 	
 	if (!this->isConnect) {
-		cout << "Khong the ket noi den ";
-		wcout << serverAddr << endl;
+		string s(&serverAddr[0], &serverAddr[wcslen(serverAddr)]);
+		cmdOut << "Khong the ket noi den " << s;
+		cmdOut.flush();
+
 		cmdConn.Close();
 		return;
 	}
 
-	cout << "Connect OK..." << endl;
+	cmdOut << "Connect OK...\n";
+	cmdOut.flush();
+
 	this->server_addr.assign(&serverAddr[0], &serverAddr[wcslen(serverAddr)-1]);
 		
 	char buffer[BUFFER_LENGTH];
 	memset(buffer, 0, BUFFER_LENGTH);
 	cmdConn.Receive(buffer, BUFFER_LENGTH-1, 0);
-	cout << buffer << endl;
+	cmdOut << buffer;
+	cmdOut.flush();
 
 	this->sendCmd("OPTS UTF8 ON\r\n");
 	this->receiveOneLine();
@@ -101,6 +108,7 @@ void readPassword(string& pass) {
 bool Eptipi::login() 
 {
 	string name, pass;
+	cmdOut.flush();
 
 	//username
 	cout << "username: " << endl;
@@ -109,7 +117,9 @@ bool Eptipi::login()
 
 	this->sendCmd("USER " + name + "\r\n");
 	this->receiveOneLine();
-	ftpStt << getReturnStr() << "\n";
+
+	ftpStt << getReturnStr();
+	ftpStt.flush();
 
 	//password
 	cout << "password: " << endl;
@@ -117,7 +127,8 @@ bool Eptipi::login()
 
 	this->sendCmd("PASS " + pass + "\r\n");
 	this->receiveOneLine();
-	ftpStt << getReturnStr() << "\n";
+	ftpStt << getReturnStr();
+	ftpStt.flush();
 
 	if (getCode() == FTPCode::LOGIN_SUCCESS) {
 		cout << "Login success\n\n";
@@ -402,7 +413,8 @@ void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConn
 	
 	if (isResponseOK) {
 		this->receiveOneLine();
-		ftpStt << getReturnStr() << "\n";
+		ftpStt << getReturnStr();
+		ftpStt.flush();
 	}
 }
 
@@ -417,7 +429,8 @@ void Eptipi::handleCmd(string cmd, string path)
 {
 	//check cmd exist
 	if (FTPCommand::listCmd.find(cmd) == FTPCommand::listCmd.end()) {
-		cout << "\tunknown command, type help to show all command\n\n";
+		cmdOut << "unknown command, type help to show all command\n\n";
+		cmdOut.flush();
 		return;
 	}
 
@@ -433,7 +446,8 @@ void Eptipi::handleCmd(string cmd, string path)
 
 		if (this->isConnect) {
 			while (!this->login()) {
-				cout << "Dang nhap lai:\n" << endl;
+				cmdOut << "Dang nhap lai:\n";
+				cmdOut.flush();
 			}
 		}
 	}
@@ -443,7 +457,8 @@ void Eptipi::handleCmd(string cmd, string path)
 			this->sendCmd("QUIT\r\n");
 			this->receiveOneLine();
 			ftpStt << getReturnStr() << "\n";
-			
+			ftpStt.flush();
+
 			this->cmdConn.Close();
 			this->isConnect = false;
 			this->server_addr.clear();
@@ -465,9 +480,10 @@ void Eptipi::handleCmd(string cmd, string path)
 
 	//check connect for commands need connection
 	if (!this->isConnect) {
-		cout << "Ban chua ket noi den server\n"
-			<< "Goi lenh open de ket noi den server\n"
-			<< endl;
+		cmdOut << "Ban chua ket noi den server\n"
+			<< "Goi lenh open de ket noi den server\n";
+		cmdOut.flush();
+
 		return;
 	}
 	else if (cmd == "dir")

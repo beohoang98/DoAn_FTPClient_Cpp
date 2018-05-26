@@ -12,7 +12,8 @@
 #include <sstream>
 #include <iomanip>
 
-#include "ConsoleOutput.h"
+#include "OutputClass/ftpStt.h"
+#include "OutputClass/cmdOut.h"
 
 using namespace std;
 
@@ -28,7 +29,9 @@ void Eptipi::lietKeChiTiet(string path)
 		static bool before(CallbackInfo &cb) {
 			cb.mainFTP->sendCmd("LIST "+cb.path+"\r\n");
 			cb.mainFTP->receiveOneLine();
+			
 			ftpStt << cb.mainFTP->getReturnStr() << "\n";
+			ftpStt.flush();
 
 			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
 				return false;
@@ -41,7 +44,9 @@ void Eptipi::lietKeChiTiet(string path)
 			char buffer[BUFFER_LENGTH];
 			memset(buffer, 0, BUFFER_LENGTH);
 			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1) > 0) {
-				cout << buffer;
+				cmdOut << buffer;
+				cmdOut.flush();
+
 				memset(buffer, 0, BUFFER_LENGTH);
 			}
 		}
@@ -70,7 +75,9 @@ void Eptipi::lietKeDonGian(string path)
 		static bool before(CallbackInfo &cb) {
 			cb.mainFTP->sendCmd("NLST " + cb.path +"\r\n");
 			cb.mainFTP->receiveOneLine();
+
 			ftpStt << cb.mainFTP->getReturnStr() << "\n";
+			ftpStt.flush();
 
 			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
 				return false;
@@ -86,7 +93,9 @@ void Eptipi::lietKeDonGian(string path)
 			char buffer[BUFFER_LENGTH];
 			memset(buffer, 0, BUFFER_LENGTH);
 			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1) > 0) {
-				cout << buffer;
+				cmdOut << buffer;
+				cmdOut.flush();
+
 				memset(buffer, 0, BUFFER_LENGTH);
 			}
 		}
@@ -127,6 +136,7 @@ void Eptipi::changeServerDir(string path)
 	this->sendCmd("CWD "+path+"\r\n"); //ascii mode
 	this->receiveOneLine();
 	ftpStt << this->getReturnStr() << "\n";
+	ftpStt.flush();
 }
  
 /*------------------------------------------
@@ -148,6 +158,7 @@ void Eptipi::printServerPath()
 	this->sendCmd("PWD\r\n"); //ascii mode
 	this->receiveOneLine();
 	ftpStt << this->getReturnStr() << "\n";
+	ftpStt.flush();
 }
  
 /*------------------------------------------
@@ -218,6 +229,7 @@ void Eptipi::downFile(string fileName)
 			}
 			else {
 				ftpStt << cb.mainFTP->getReturnStr() << "\n";
+				ftpStt.flush();
 			}
 			
 			//switch to binary mode
@@ -227,7 +239,9 @@ void Eptipi::downFile(string fileName)
 			// get file
 			cb.mainFTP->sendCmd("RETR " + cb.path + "\r\n");
 			cb.mainFTP->receiveOneLine();
+
 			ftpStt << cb.mainFTP->getReturnStr() << "\n";
+			ftpStt.flush();
 
 			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
 				return false;
@@ -250,7 +264,9 @@ void Eptipi::downFile(string fileName)
 			//create new file
 			ofstream fileout(cb.path, ios::binary);
 			if (!fileout.is_open()) {
-				cout << "\tError: cannot save downloaded file\n\n";
+				cmdOut << "Error: cannot save downloaded file";
+				cmdOut.flush();
+
 				return;
 			}
 
@@ -303,7 +319,9 @@ void Eptipi::downNhieuFile(string fileNames)
 		static bool before(CallbackInfo& cb) {
 			cb.mainFTP->sendCmd("NLST " + cb.path + "\r\n");
 			cb.mainFTP->receiveOneLine();
+			
 			ftpStt << cb.mainFTP->getReturnStr() << "\n";
+			ftpStt.flush();
 
 			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
 				return false;
@@ -429,7 +447,9 @@ void Eptipi::xoaFile(string filename)
 {
 	this->sendCmd("DELE " + filename + "\r\n"); //ascii mode
 	this->receiveOneLine();
+	
 	ftpStt << this->getReturnStr() << "\n";
+	ftpStt.flush();
 }
 
 void Eptipi::xoaFolder(string tenfolder)
@@ -437,6 +457,7 @@ void Eptipi::xoaFolder(string tenfolder)
 	this->sendCmd("XRMD " + tenfolder + "\r\n"); //ascii mode
 	this->receiveOneLine();
 	ftpStt << this->getReturnStr() << "\n";
+	ftpStt.flush();
 }
 
 void Eptipi::taoFolder(string tenfolder)
@@ -444,4 +465,5 @@ void Eptipi::taoFolder(string tenfolder)
 	this->sendCmd("XMKD " + tenfolder + "\r\n"); //ascii mode
 	this->receiveOneLine();
 	ftpStt << this->getReturnStr() << "\n";
+	ftpStt.flush();
 }
