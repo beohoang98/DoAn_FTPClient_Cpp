@@ -1,36 +1,18 @@
+/**
+ * 
+ * File Header de khai bao class Epitpi va cac constant lien quan
+ * 
+ * Created by BeoHoang
+*/
+
 #pragma once
 
 #include "resource.h"
 #include <afxsock.h>
 #include <iostream>
-#include <string>
-#include <sstream>
-#include <stdio.h>
-#include <conio.h>
-#include <map>
 
-enum FTPCode {
-	CONNECT_SUCCESS = 220,
-
-	LOGIN_SUCCESS = 230,
-	LOGIN_FAILED = 530,
-
-	OPEN_PASV_PORT = 227,
-	OPEN_LPSV_PORT = 228,
-	OPEN_ESPV_PORT = 229,
-
-	COMMAND_SUCCESS = 200,
-	CANNOT_OPEN_DATA_CONNECT = 425,
-
-	READY_TRANSFER = 150,
-
-	TRANSFER_SUCCESS = 226,
-
-	FILE_STATUS = 213,
-
-	CONNECT_FAILED = 421
-};
-
+#include "EptipiCommand.h"
+#include "EptipiConstants.h"
 
 #define BUFFER_LENGTH 512
 
@@ -38,32 +20,39 @@ using namespace std;
 
 class Eptipi {
 private:
-	const wchar_t * servername;
+	wstring server_addr;
+	string client_addr;
 
 	CSocket cmdConn; // command connection
 	int returnCode;
 	string returnStr;
 	int returnPort;
+	UCHAR isConnect;
+
+	UCHAR dataMode;
+	UCHAR fileMode;
 
 protected:
 	struct CallbackInfo {
 		std::string path = "";
 		Eptipi * mainFTP = NULL;
 		CSocket * dataCon = NULL;
-		int filesize = 0;
+		UINT64 filesize = 0;
 	};
 
 	CSocket * openActivePortAndConnect();
 	CSocket * openPassivePortAndConnect();
 	void openDataPort(bool(*)(CallbackInfo&), void(*)(CallbackInfo&), CallbackInfo&);
+	bool receiveAll();
+	bool receiveOneLine();
 
 public:
 	// ham co ban
 	void sendCmd(string cmd);
 	void sendCmd(wstring cmd);
-	bool receiveAll();
-	bool receiveOneLine();
+	void receiveStatus();
 
+	//get method
 	int getCode();
 	int getReturnPort();
 	string getReturnStr();
@@ -75,10 +64,10 @@ public:
 	void handleCmd(string cmd, string path);
 
 	//main command
-	void lietKeChiTiet(); // dir
-	void lietKeDonGian(); // ls
-	void lietKeClientChiTiet(); //ldir
-	void lietKeClientDonGian(); //lls
+	void lietKeChiTiet(string path); // dir
+	void lietKeDonGian(string path); // ls
+	void lietKeClientChiTiet(string path); //ldir
+	void lietKeClientDonGian(string path); //lls
 	
 	void changeServerDir(string path); // cd
 	void changeClientDir(string path); // lcd
@@ -96,6 +85,12 @@ public:
 	void xoaFolder(string tenfolder);
 
 	void showAllCmd();
+	void showHelpFor(string cmd);
+
+	void switchToPassive();
+	void switchToActive();
+	void switchToBinary();
+	void switchToAscii();
 
 	~Eptipi();
 };
@@ -118,17 +113,5 @@ public:
 	}
 };
 
-const map<string, string> listCmd = {
-	{ "dir", "liet ke chi tiet thu muc tren server" },
-	{ "ls", "liet ke ten cac thu muc tren server" },
-	{ "ldir", "liet ke chi tiet thu muc client" },
-	{ "lls", "liet ke ten thu muc client" },
-	{ "cd", "thay doi duong dan tren server" },
-	{ "lcd", "thay doi duong dan o client" },
-	{ "pwd", "in ra duong dan hien tai tren server" },
-	{ "get [ten file]", "download file [ten file] ve client" },
-	{ "mget [expr]", "download nhieu file thoa man [expr]" },
-	{ "put [asd]", "upload file [asd] len server" },
-	{ "mput", "upload nhieu file" },
-	{ "quit", "thoat ftp" }
-};
+// khai bao cac mo ta cua cau lenh tai day
+// define description of cmd here
