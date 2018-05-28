@@ -13,6 +13,18 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Eptipi">
+      <UniqueIdentifier>{6a011a1a-015e-4472-8ed8-85fcb8698a4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Feature">
+      <UniqueIdentifier>{3e7f6f92-f18d-4f80-843c-a17c741d595a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Eptipi">
+      <UniqueIdentifier>{e2f9878d-eb89-47f3-b223-f8936dc4426c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Feature">
+      <UniqueIdentifier>{a87ea322-7c41-4a64-ad81-2216e5216a2e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -29,16 +41,16 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="eptipi.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Eptipi</Filter>
     </ClInclude>
     <ClInclude Include="EptipiCommand.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Eptipi</Filter>
     </ClInclude>
     <ClInclude Include="EptipiConstants.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Eptipi</Filter>
     </ClInclude>
     <ClInclude Include="ProgressBar.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Feature</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -49,13 +61,13 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="EptipiClass.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Eptipi</Filter>
     </ClCompile>
     <ClCompile Include="EptipiHandleCmd.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Eptipi</Filter>
     </ClCompile>
     <ClCompile Include="ProgressBar.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Feature</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
