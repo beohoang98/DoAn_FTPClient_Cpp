@@ -1,0 +1,38 @@
+#pragma once
+
+#include "stdafx.h"
+
+enum FTPCode {
+	CONNECT_SUCCESS = 220,
+
+	LOGIN_SUCCESS = 230,
+	LOGIN_FAILED = 530,
+
+	OPEN_PASV_PORT = 227,
+	OPEN_LPSV_PORT = 228,
+	OPEN_ESPV_PORT = 229,
+
+	COMMAND_SUCCESS = 200,
+	CANNOT_OPEN_DATA_CONNECT = 425,
+
+	DATA_ALREADY_OPEN = 125,
+	READY_TRANSFER = 150,
+	TRANSFER_SUCCESS = 226,
+
+	CWD_SUCCESS = 250,
+
+	FILE_STATUS = 213,
+
+	DISCONNECT = 421
+};
+
+namespace FTPDataMode {
+	const UCHAR PASSIVE = 0;
+	const UCHAR ACTIVE = 1;
+	const UCHAR DEFAULT = PASSIVE;
+}
+namespace FTPFileMode {
+	const UCHAR BINARY = 0;
+	const UCHAR ASCII = 1;
+	const UCHAR DEFAULT = BINARY;
+}

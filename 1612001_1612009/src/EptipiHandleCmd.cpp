@@ -1,9 +1,18 @@
+/**
+ * Source nay de define cac ham xu ly lenh ftp
+ * 
+ * Created by BeoHoang
+*/
+
 #pragma once
 
 #include "stdafx.h"
 #include "eptipi.h"
 #include <fstream>
+#include <sstream>
 #include <iomanip>
+
+#include "ProgressBar.h"
 
 using namespace std;
 
@@ -18,10 +27,11 @@ void Eptipi::lietKeChiTiet(string path)
 		
 		static bool before(CallbackInfo &cb) {
 			cb.mainFTP->sendCmd("LIST "+cb.path+"\r\n");
-			cb.mainFTP->receiveOneLine();
+			cb.mainFTP->receiveStatus();
 			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
 
-			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
+			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER 
+				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
 				return false;
 			return true;
 		};
@@ -39,7 +49,7 @@ void Eptipi::lietKeChiTiet(string path)
 	};
 
 	this->sendCmd("TYPE A\r\n"); //ascii mode
-	this->receiveOneLine();
+	this->receiveStatus();
 
 	CallbackInfo cb;
 	cb.path = path;
@@ -60,10 +70,11 @@ void Eptipi::lietKeDonGian(string path)
 		*/
 		static bool before(CallbackInfo &cb) {
 			cb.mainFTP->sendCmd("NLST " + cb.path +"\r\n");
-			cb.mainFTP->receiveOneLine();
+			cb.mainFTP->receiveStatus();
 			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
 
-			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
+			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER
+				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
 				return false;
 			return true;
 		};
@@ -84,7 +95,7 @@ void Eptipi::lietKeDonGian(string path)
 	};
 
 	this->sendCmd("TYPE A\r\n"); //ascii mode
-	this->receiveOneLine();
+	this->receiveStatus();
 
 	CallbackInfo cb;
 	cb.mainFTP = this;
@@ -116,7 +127,7 @@ cd
 void Eptipi::changeServerDir(string path)
 {
 	this->sendCmd("CWD "+path+"\r\n"); //ascii mode
-	this->receiveOneLine();
+	this->receiveStatus();
 	cout << this->getReturnStr() << endl;
 }
  
@@ -137,7 +148,7 @@ void Eptipi::changeClientDir(string path)
 void Eptipi::printServerPath()
 {
 	this->sendCmd("PWD\r\n"); //ascii mode
-	this->receiveOneLine();
+	this->receiveStatus();
 	cout << this->getReturnStr() << endl;
 }
  
@@ -164,29 +175,6 @@ void Eptipi::upFile(string fileName)
 void Eptipi::downFile(string fileName)
 {
 	struct ASD {
-		static void showPercent(ostream &os, INT64 cur, INT64 size, clock_t time) {
-			INT64 showLength = cur * 20 / size;
-			if (showLength > 20) showLength = 20;
-			
-			int speed;
-			time_t esTime = 0;
-			if (time > 0) {
-				speed = cur * CLOCKS_PER_SEC / time;
-				esTime = (size - cur) / speed;
-			}
-			else speed = 0;
-
-			os << "\r\t[";
-			for (int i = 0; i < showLength; ++i)
-				os << char(219);
-			for (int i = 0; i < 20 - showLength; ++i)
-				os << '-';
-			os << "] " << cur/1024 << "/" << size/1024 << "KB ";
-			os << setw(4) << speed/1024 << "KB/s ";
-			os << setw(2) << esTime / 3600 << "h" 
-				<< setw(2) << (esTime % 3600) / 60 << "m" 
-				<< setw(2) << (esTime % 60) << "s";
-		}
 		/*
 		thuc hien cau lenh de su dung data port
 		@param (cb) du lieu luu lai de callback
@@ -195,11 +183,11 @@ void Eptipi::downFile(string fileName)
 		{
 			string cmd;
 			char buffer[BUFFER_LENGTH] = { 0 };
-			INT64 filesize = 0;
+			UINT64 filesize = 0;
 
 			//get file size
 			cb.mainFTP->sendCmd("SIZE " + cb.path + "\r\n");
-			cb.mainFTP->receiveOneLine();
+			cb.mainFTP->receiveStatus();
 			if (cb.mainFTP->getCode() == FTPCode::FILE_STATUS) {
 				stringstream forReadStr(cb.mainFTP->getReturnStr());
 				forReadStr >> filesize	// first is code (213)
@@ -212,14 +200,15 @@ void Eptipi::downFile(string fileName)
 			
 			//switch to binary mode
 			cb.mainFTP->sendCmd("TYPE I\r\n");
-			cb.mainFTP->receiveOneLine();
+			cb.mainFTP->receiveStatus();
 			
 			// get file
 			cb.mainFTP->sendCmd("RETR " + cb.path + "\r\n");
-			cb.mainFTP->receiveOneLine();
+			cb.mainFTP->receiveStatus();
 			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
 
-			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
+			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER
+				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
 				return false;
 			return true;
 		};
@@ -232,7 +221,8 @@ void Eptipi::downFile(string fileName)
 		{
 			if (cb.dataCon == NULL)
 				return;
-			int filesize = 0;
+			UINT64 filesize = 0;
+
 			int bytes = 0;
 			char buffer[BUFFER_LENGTH];
 			memset(buffer, 0, BUFFER_LENGTH);
@@ -244,25 +234,24 @@ void Eptipi::downFile(string fileName)
 				return;
 			}
 
-			clock_t startTm = clock();
-			clock_t countTm;
-			INT64 oldKB = 8 * 1024 * 1024; // cu moi~ 8MB se hien thi % download
+			ProgressBar display;
+			display.setBarSize(20);
+			display.setTotalSize(cb.filesize);
+
 			while ((bytes = cb.dataCon->Receive(buffer, BUFFER_LENGTH)) && bytes > 0) {
 				//write data to file
 				fileout.write(buffer, bytes);
 				memset(buffer, 0, BUFFER_LENGTH);
 				filesize += bytes;
 
-				if (cb.filesize > 0 && filesize > oldKB) {
-					countTm = clock() - startTm;
-					ASD::showPercent(cout, filesize, cb.filesize, countTm);
-					oldKB += 1024 * 1024;
-				}
+				display.updateAndDraw(cout, filesize);
 			}
 
-			if (cb.filesize > 0) ASD::showPercent(cout, filesize, cb.filesize, 0);
+			//finally
+			display.update(cb.filesize);
+			if (cb.filesize > 0) display.draw(cout);
+
 			cout << endl;
-			
 			cout << "\tDownload " << cb.path << " successfully\n";
 			cout << "\tLength: " << filesize << "\n\n";
 			fileout.close();			
@@ -292,10 +281,11 @@ void Eptipi::downNhieuFile(string fileNames)
 	struct GetFileList {
 		static bool before(CallbackInfo& cb) {
 			cb.mainFTP->sendCmd("NLST " + cb.path + "\r\n");
-			cb.mainFTP->receiveOneLine();
+			cb.mainFTP->receiveStatus();
 			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
 
-			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
+			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER
+				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
 				return false;
 			return true;
 		};
@@ -358,7 +348,7 @@ void Eptipi::downNhieuFile(string fileNames)
  
 
 void Eptipi::showAllCmd() {
-	for (auto cmd : listCmd) {
+	for (auto cmd : FTPCommand::listCmd) {
 		cout << '\t' << setw(20) << left 
 			<< cmd.first
 			<< " : " 
@@ -369,9 +359,9 @@ void Eptipi::showAllCmd() {
 
 
 void Eptipi::showHelpFor(string cmd) {
-	auto info = listCmd.find(cmd);
+	auto info = FTPCommand::listCmd.find(cmd);
 	
-	if (info == listCmd.end()) {
+	if (info == FTPCommand::listCmd.end()) {
 		cout << "\tkhong tim thay " << cmd << "\n\n";
 		return;
 	}
@@ -418,20 +408,20 @@ void Eptipi::switchToAscii()
 void Eptipi::xoaFile(string filename)
 {
 	this->sendCmd("DELE " + filename + "\r\n"); //ascii mode
-	this->receiveOneLine();
+	this->receiveStatus();
 	cout << this->getReturnStr() << endl;
 }
 
 void Eptipi::xoaFolder(string tenfolder)
 {
 	this->sendCmd("XRMD " + tenfolder + "\r\n"); //ascii mode
-	this->receiveOneLine();
+	this->receiveStatus();
 	cout << this->getReturnStr() << endl;
 }
 
 void Eptipi::taoFolder(string tenfolder)
 {
 	this->sendCmd("XMKD " + tenfolder + "\r\n"); //ascii mode
-	this->receiveOneLine();
+	this->receiveStatus();
 	cout << this->getReturnStr() << endl;
 }
