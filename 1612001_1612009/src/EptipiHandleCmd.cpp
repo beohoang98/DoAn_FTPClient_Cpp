@@ -185,6 +185,11 @@ void Eptipi::downFile(string fileName)
 			char buffer[BUFFER_LENGTH] = { 0 };
 			UINT64 filesize = 0;
 
+			//switch to binary mode
+			cb.mainFTP->sendCmd("TYPE I\r\n");
+			cb.mainFTP->receiveStatus();
+
+
 			//get file size
 			cb.mainFTP->sendCmd("SIZE " + cb.path + "\r\n");
 			cb.mainFTP->receiveStatus();
@@ -197,10 +202,6 @@ void Eptipi::downFile(string fileName)
 			else {
 				cout << "\t" << cb.mainFTP->getReturnStr() << endl;
 			}
-			
-			//switch to binary mode
-			cb.mainFTP->sendCmd("TYPE I\r\n");
-			cb.mainFTP->receiveStatus();
 			
 			// get file
 			cb.mainFTP->sendCmd("RETR " + cb.path + "\r\n");
