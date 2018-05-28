@@ -1,0 +1,8 @@
+test.rebex.net
+	demo/password
+speedtest.tele2.net
+	anonymous
+ftp.uconn.edu
+	anonymous
+ftp.drivehq.com
+	anaizhu98/[bi mat]

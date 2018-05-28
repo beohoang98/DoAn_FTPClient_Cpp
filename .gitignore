@@ -6,3 +6,16 @@ ipch/*
 ipch/
 *.sdf
 */*.sdf
+*/.vscode
+*/.vs
+.vscode
+.vs
+*/forTest_get/*
+*/*.log
+*/*.lib
+*/*.obj
+*/*.sdf
+*/*.tlog
+*/*.pdb
+*/*.pch
+*/*.aps
