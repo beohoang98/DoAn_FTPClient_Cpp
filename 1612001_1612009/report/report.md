@@ -1,5 +1,5 @@
-# <center>BÁO CÁO ĐỒ ÁN</center>
-<center>[Github](https://github.com/beohoang98/DoAn_MMT_FTPSocket/)</center>
+# BÁO CÁO ĐỒ ÁN
+**[Github](https://github.com/beohoang98/DoAn_FTPClient_Cpp)**
 
 ## THÀNH VIÊN
 
@@ -45,9 +45,25 @@ STT		|	Chức năng					| Hoàn thành
 13		|Cơ chế passive và active		|1
 |**Tổng**|**69%**
 
+\newpage
+
 ## BÁO CÁO CÁC HÀM VÀ CẤU TRÚC CHƯƠNG TRÌNH
 
-### 1. CẤU TRÚC CHƯƠNG TRÌNH
+---
+
+<center> **MỤC LỤC** </center>
+
+1. [CẤU TRÚC CHƯƠNG TRÌNH](#main-struct)
+2. [DANH SÁCH LỆNH](#list-cmd)
+3. [CÁC HẰNG SỐ](#list-const)
+4. [CẤU TRÚC CLASS `EPTIPI`](#class-struct)
+5. [SCREENSHOTS VÀ THEO DÕI GÓI TIN BẰNG WIRESHARK](#screenshots)
+
+---
+
+<a name="main-struct"></a> 
+
+### 1. CẤU TRÚC CHƯƠNG TRÌNH 
 	
 1. Khởi tạo kết nối server với địa chỉ từ arguments, hoặc từ lệnh open
 2. Gọi hàm login để người dùng login vào, lặp lại đến khi login thành công
@@ -55,12 +71,43 @@ STT		|	Chức năng					| Hoàn thành
 4. Xử lý lệnh người dùng và gọi hàm đã viết
 5. Lặp về Bước 3
 
+<a name="list-cmd"></a>
+
 ### 2. DANH SÁCH LỆNH
 
 Các câu lệnh của chương trình (`dir`, `ls`, ...) được lưu trong một `std::map listCmd` kèm với `struct cmpDescription` là các thông tin chi tiết về lệnh đó
 
 - Key của `listCmd` là kiểu chuỗi, là câu lệnh.
 - Value của `listCmd` là một `struct` gồm syntax câu lệnh (`title`) và thông tin chi tiết (`description`)
+
+Các lệnh bao gồm
+
+- `open`
+- `ls` hoặc `ls [path]`
+- `dir` hoặc `dir [path]`
+- `cd [path]`
+- `pwd`
+- `lcd [path]`
+- `lls`
+- `ldir`
+- `get [path]`
+- `mget [expression]`
+- `put [path]`
+- `mput [expression]`
+- `del [path]`
+- `mdel [expression]`
+- `mkdir [name]`
+- `rmdir [name]`
+- `help [cmd name]` hoặc `help`
+- `bye`
+- `disconnect`
+- `quit`
+
+Chi tiết hơn tại **[đây](./EptipiDocumemt.md#listCmd)**
+
+\newpage
+
+<a name="list-const"></a>
 
 ### 3. CÁC HẰNG SỐ
 
@@ -86,13 +133,21 @@ Các câu lệnh của chương trình (`dir`, `ls`, ...) được lưu trong m�
 	- `FTPFileMode::ASCII` và `FTPFileMode::BINARY`
 	- Mặc định `FTPFileMode::DEFAULT = FTPFileMode::BINARY`
 
-### 2. CẤU TRÚC CLASS EPTIPI
+---
+
+\newpage
+
+<a name="class-struct"></a>
+
+### 4. CẤU TRÚC CLASS EPTIPI 
 
 Dùng để xử lý các câu lệnh và các giao thức ftp nhanh hơn
 
 Chứa thông tin socket kết nối đến server
 
-Xử lý các hàm nhận vào từ người dùng (```'ls', 'dir', 'get'```, ...)
+Xử lý các hàm nhận vào từ người dùng (`'ls', 'dir', 'get'`, ...)
+
+[Chi tiết về class Eptipi](./EptipiDocument.md)
 
 ---
 
@@ -171,10 +226,12 @@ Sử dụng sau khi thực hiện lệnh `sendCmd()`
 VD:
 
 - Server trả về `220 Welcome ...`
+
 	- Hàm cắt ra 220 và lưu vào `returnCode`
 	- Chuỗi trả về lưu vào `returnStr`
 
 - Server trả về `227 Passive mode (15,10,19,97,69,69)`
+
 	- Chuỗi trả về sẽ lưu vào `returnStr`
 	- Status code `227` sẽ lưu vào `returnCode`
 	- Port server trả về bao gồm `15.10.19.97` lưu vào `server_addr` và 69*256 + 69 = 17733 sẽ lưu vào `returnPort`
@@ -196,11 +253,13 @@ Trả về CSocket đã Listen, đợi Accept sau.
 Thực hiện công việc có sử dụng đến data connection
 
 Param:
+
 - [`CallbackParam`][callback] `&cb` : chứa thông tin cmdConn, dataConn (data connection mới mở), ... cho hàm `before` và `after`
 - `bool (*before)(CallbackParam &)` : tham số hàm trả về `bool`, nhận tham số [`CallbackParam`][callback]
 - `void (*after)(CallbackParam &)` : tham số hàm nhận vào [`CallbackParam`][callback]
 
 Hàm sẽ:
+
 - Mở port (active hay passive)
 - Thực hiện hàm **before**
 - Nếu hàm before lỗi, return
@@ -216,8 +275,8 @@ VD: Khi xử lý lệnh `dir` sẽ là
 	cb.main = this;
 
 	openDataPort([](CallbackParam &cb){
-		cb.main->cmdCon.sendCmd("LIST\r\n");
-		cb.main->cmdCon.receiveStatus();
+		cb.mainFTP->cmdCon.sendCmd("LIST\r\n");
+		cb.mainFTP->cmdCon.receiveStatus();
 	}, [](CallbackParam &cb){
 		if (cb.dataCon == NULL) return;
 
@@ -228,18 +287,65 @@ VD: Khi xử lý lệnh `dir` sẽ là
 	
 ---
 
-### Cấu trúc dữ liệu hỗ trợ <a name="CallbackParam">
+<a name="CallbackParam">
+
+### Cấu trúc dữ liệu hỗ trợ
 
 ```cpp
 	struct CallbackParam
 	{
-		EptipiClass * main;
+		Eptipi * mainFTP;
 		CSocket * dataCon;
 		std::string path;
 		UINT64 filesize;
 	}
 ```
 
+---
+
+\newpage
+
+<a name="screenshots"></a>
+
+### 5. SCREENSHOTS VÀ BẮT GÓI TIN BẰNG WIRESHARK
+
+* `open test.rebex.net`
+
+![connect server cli](./images/connect_cli.jpg)
+
+![connect server ws](./images/connect_ws.jpg)
+
+---
+
+* `dir`
+	
+![dir in console](./images/dir_cli.jpg)
+
+![dir show in wireshark](./images/dir_ws.jpg)
+
+---
+
+* `cd pub/example`
+
+![cd in console](./images/cd_cli.jpg)
+
+![cd show in wireshark](./images/cd_ws.jpg)
+
+---
+
+* `mget *.png`
+
+![mget in console](./images/mget_cli.jpg)
+
+![mget show in wireshark](./images/mget_ws.jpg)
+
+---
+
+* **Result**
+
+![Kết quả](./images/result.jpg)
+
+---
 
 ## TÀI LIỆU THAM KHẢO
 
