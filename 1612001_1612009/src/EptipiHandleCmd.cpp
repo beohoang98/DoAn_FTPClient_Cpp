@@ -8,6 +8,7 @@
 
 #include "stdafx.h"
 #include "eptipi.h"
+#define _CRT_SECURE_NO_WARNINGS
 #include <fstream>
 #include <sstream>
 #include <iomanip>
@@ -143,7 +144,7 @@ void Eptipi::changeClientDir(string path)
  
 
 /*------------------------------------------
-
+	pwd
 */
 void Eptipi::printServerPath()
 {
@@ -153,7 +154,7 @@ void Eptipi::printServerPath()
 }
  
 /*------------------------------------------
-
+	lpwd
 */
 void Eptipi::printClientPath()
 {
@@ -162,15 +163,87 @@ void Eptipi::printClientPath()
  
 
 /*------------------------------------------
-
+	put
 */
 void Eptipi::upFile(string fileName)
 {
+	struct ASD {
+		/*
+		thuc hien cau lenh de su dung data port
+		@param (cb) du lieu luu lai de callback
+		*/
+		static bool before(CallbackInfo&cb)
+		{
+			cb.mainFTP->sendCmd("STOR "+cb.path+"\r\n");
+			cb.mainFTP->receiveStatus();
+			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
 
+			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER
+				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
+				return false;
+			return true;
+		};
+
+		/*
+		thuc hien sau khi port duoc connect thanh cong
+		@param (cb) du lieu callback luu lai bao gom dataCon(data port da connect)
+		*/
+		static void after(CallbackInfo&cb)
+		{
+			if (cb.dataCon == NULL)
+				return;
+			int bytes = 0;
+			char buffer[BUFFER_LENGTH];
+			memset(buffer, 0, BUFFER_LENGTH);
+
+			//create new file
+			ifstream fileinp(cb.path, ios::binary);
+			if (!fileinp.is_open()) 
+			{
+				cout << "\tError: cannot save uploaded file\n\n";
+				return;
+			}
+			UINT64 filesize = fileinp.gcount();
+			ProgressBar display;
+			display.setBarSize(20);
+			display.setTotalSize(cb.filesize);
+
+			while (!fileinp.eof()) 
+			{
+				//read data to file
+				fileinp.read(buffer, BUFFER_LENGTH);
+				bytes = cb.dataCon->Send(buffer, fileinp.gcount());
+				memset(buffer, 0, BUFFER_LENGTH);
+				filesize += fileinp.gcount();
+				display.updateAndDraw(cout, filesize);
+			}
+			//finally
+			display.update(cb.filesize);
+			if (cb.filesize > 0) display.draw(cout);
+
+			cout << endl;
+			cout << "\tUpload " << cb.path << " successfully\n";
+			cout << "\tLength: " << filesize << "\n\n";
+			fileinp.close();
+		}
+	};
+
+	CallbackInfo callbackparam;
+	callbackparam.path = fileName;
+	callbackparam.mainFTP = this;
+	ifstream fileinp(fileName, ios::binary);
+	if (!fileinp.is_open())
+	{
+		cout << "\tError: cannot save uploaded file\n\n";
+		return;
+	}
+	else
+		fileinp.close();
+	openDataPort(ASD::before, ASD::after, callbackparam);
 }
  
 /*------------------------------------------
-
+	get
 */
 void Eptipi::downFile(string fileName)
 {
@@ -185,6 +258,11 @@ void Eptipi::downFile(string fileName)
 			char buffer[BUFFER_LENGTH] = { 0 };
 			UINT64 filesize = 0;
 
+			//switch to binary mode
+			cb.mainFTP->sendCmd("TYPE I\r\n");
+			cb.mainFTP->receiveStatus();
+
+
 			//get file size
 			cb.mainFTP->sendCmd("SIZE " + cb.path + "\r\n");
 			cb.mainFTP->receiveStatus();
@@ -197,10 +275,6 @@ void Eptipi::downFile(string fileName)
 			else {
 				cout << "\t" << cb.mainFTP->getReturnStr() << endl;
 			}
-			
-			//switch to binary mode
-			cb.mainFTP->sendCmd("TYPE I\r\n");
-			cb.mainFTP->receiveStatus();
 			
 			// get file
 			cb.mainFTP->sendCmd("RETR " + cb.path + "\r\n");
@@ -266,15 +340,41 @@ void Eptipi::downFile(string fileName)
 }
  
 /*------------------------------------------
-
+	mput
 */
 void Eptipi::upNhieuFile(string fileNames)
 {
-	
+	stringstream split_path(fileNames);
+	string path_each;
+	string filename;
+	string cmd;
+	UCHAR isPrompt = true;
+
+	//ask user prompt or not
+	cout << "Do you want open prompt for each file?(y-yes, else-no) ";
+	cin >> cmd;
+	cin.sync();
+	if (cmd != "y" && cmd != "yes")
+		isPrompt = false;
+
+	while (!split_path.eof()) 
+	{
+		getline(split_path, path_each, ' ');
+		
+		cout << "Put " << path_each << "?(y-yes/else-no): ";
+		cin.sync(); //flush \n
+		getline(cin, cmd);
+		if (cmd == "y" || cmd == "yes")
+		{
+			this->upFile(path_each);
+		}
+	}
+
+	cout << endl;
 }
  
 /*------------------------------------------
-
+	mget
 */
 void Eptipi::downNhieuFile(string fileNames)
 {
@@ -410,6 +510,76 @@ void Eptipi::xoaFile(string filename)
 	this->sendCmd("DELE " + filename + "\r\n"); //ascii mode
 	this->receiveStatus();
 	cout << this->getReturnStr() << endl;
+}
+
+void Eptipi::xoaNhieuFile(string fileNames)
+{
+	struct DelFileList {
+		static bool before(CallbackInfo& cb) {
+			cb.mainFTP->sendCmd("NLST " + cb.path + "\r\n");
+			cb.mainFTP->receiveStatus();
+			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
+
+			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER
+				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
+				return false;
+			return true;
+		};
+		static void after(CallbackInfo& cb) {
+			if (cb.dataCon == NULL)
+				return;
+
+			cb.path = "";
+			char buffer[BUFFER_LENGTH] = { 0 };
+			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1)) {
+				cb.path += buffer;
+			}
+		}
+	};
+
+	stringstream split_path(fileNames);
+	string path_each;
+	string filename;
+	string cmd;
+	UCHAR isPrompt = true;
+
+	//ask user prompt or not
+	cout << "Do you want to ask for delete each file(y-yes, else-no)?";
+	cin >> cmd;
+	cin.sync();
+	if (cmd != "y" && cmd != "yes")
+		isPrompt = false;
+
+	while (!split_path.eof()) {
+		getline(split_path, path_each, ' ');
+
+		CallbackInfo cb;
+		cb.mainFTP = this;
+		cb.path = path_each;
+		openDataPort(DelFileList::before, DelFileList::after, cb);
+
+		stringstream forSplitFile(cb.path);
+
+		while (!forSplitFile.eof()) {
+			getline(forSplitFile, filename, '\r');
+			if (filename[0] == '\n') filename.erase(0, 1);
+			if (filename == "") break;
+
+			if (!isPrompt) {
+				this->xoaFile(filename);
+				continue;
+			}
+
+			cout << "Del " << filename << "?(y-yes/else-no): ";
+			cin.sync(); //flush \n
+			getline(cin, cmd);
+			if (cmd == "y" || cmd == "yes") {
+				this->xoaFile(filename);
+			}
+		}
+	}
+
+	cout << endl;
 }
 
 void Eptipi::xoaFolder(string tenfolder)
