@@ -602,6 +602,10 @@ void Eptipi::handleCmd(string cmd, string path)
 	{
 		this->xoaFile(path);
 	}
+	else if (cmd == "mdel")
+	{
+		this->xoaNhieuFile(path);
+	}
 	else if (cmd == "rmdir")
 	{
 		this->xoaFolder(path);
