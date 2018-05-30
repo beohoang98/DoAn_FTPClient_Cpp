@@ -5,7 +5,7 @@
 */
 
 #pragma once
-
+#include<Windows.h>
 #include "stdafx.h"
 #include "eptipi.h"
 #define _CRT_SECURE_NO_WARNINGS
@@ -14,7 +14,9 @@
 #include <iomanip>
 
 #include "ProgressBar.h"
-
+#include<stdio.h>
+#include<string>
+#include<iostream>
 using namespace std;
 
 
@@ -360,14 +362,54 @@ void Eptipi::upNhieuFile(string fileNames)
 	while (!split_path.eof()) 
 	{
 		getline(split_path, path_each, ' ');
-		
-		cout << "Put " << path_each << "?(y-yes/else-no): ";
-		cin.sync(); //flush \n
-		getline(cin, cmd);
-		if (cmd == "y" || cmd == "yes")
+		////////////////////////////////////////////////////////////
+		//string sDir = GetCurrentDirectoryA();
+		char buf[100];
+		GetCurrentDirectoryA(100,buf);
+		string sDir = buf;
+		WIN32_FIND_DATAA fdFile;
+		HANDLE hFind = NULL;
+		string sPath;
+		sPath = sDir + "\\" + path_each;
+		if ((hFind = FindFirstFileA(sPath.c_str(), &fdFile)) == INVALID_HANDLE_VALUE)
 		{
-			this->upFile(path_each);
+			cout << "Path not found:" << sDir << endl;
+			//return false;
 		}
+
+		do
+		{
+			if (strcmp(fdFile.cFileName, ".") != 0
+				&& strcmp(fdFile.cFileName, "..") != 0)
+			{
+				sPath = sDir + "\\" + fdFile.cFileName;
+				if (fdFile.dwFileAttributes &FILE_ATTRIBUTE_DIRECTORY)
+				{
+				}
+				else{
+					//cout << sPath.substr(sDir.length() + 1, sPath.length()) << endl;
+					filename = sPath.substr(sDir.length() + 1, sPath.length());
+					cout << "Put " << filename << "?(y-yes/else-no): ";
+					cin.sync(); //flush \n
+					getline(cin, cmd);
+					if (cmd == "y" || cmd == "yes")
+					{
+						this->upFile(filename);
+					}
+				}
+			}
+		} while (FindNextFileA(hFind, &fdFile)); //Find the next file.
+
+		FindClose(hFind); //Always, Always, clean things up!
+		///////////////////////////////////////////////////////
+
+		//cout << "Put " << path_each << "?(y-yes/else-no): ";
+		//cin.sync(); //flush \n
+		//getline(cin, cmd);
+		//if (cmd == "y" || cmd == "yes")
+		//{
+		//	this->upFile(path_each);
+		//}
 	}
 
 	cout << endl;
