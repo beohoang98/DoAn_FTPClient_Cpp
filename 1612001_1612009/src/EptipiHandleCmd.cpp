@@ -258,6 +258,11 @@ void Eptipi::downFile(string fileName)
 			char buffer[BUFFER_LENGTH] = { 0 };
 			UINT64 filesize = 0;
 
+			//switch to binary mode
+			cb.mainFTP->sendCmd("TYPE I\r\n");
+			cb.mainFTP->receiveStatus();
+
+
 			//get file size
 			cb.mainFTP->sendCmd("SIZE " + cb.path + "\r\n");
 			cb.mainFTP->receiveStatus();
@@ -270,10 +275,6 @@ void Eptipi::downFile(string fileName)
 			else {
 				cout << "\t" << cb.mainFTP->getReturnStr() << endl;
 			}
-			
-			//switch to binary mode
-			cb.mainFTP->sendCmd("TYPE I\r\n");
-			cb.mainFTP->receiveStatus();
 			
 			// get file
 			cb.mainFTP->sendCmd("RETR " + cb.path + "\r\n");
@@ -359,34 +360,7 @@ void Eptipi::upNhieuFile(string fileNames)
 	while (!split_path.eof()) 
 	{
 		getline(split_path, path_each, ' ');
-		/*
-		CallbackInfo cb;
-		cb.mainFTP = this;
-		cb.path = path_each;
-		//openDataPort(GetFileList::before, GetFileList::after, cb);
-
-		stringstream forSplitFile(cb.path);
-
-		while (!forSplitFile.eof()) 
-		{
-			getline(forSplitFile, filename, '\r');
-			if (filename[0] == '\n') filename.erase(0, 1);
-			if (filename == "") break;
-
-			if (!isPrompt) {
-				this->upFile(filename);
-				continue;
-			}
-
-			cout << "Put " << filename << "?(y-yes/else-no): ";
-			cin.sync(); //flush \n
-			getline(cin, cmd);
-			if (cmd == "y" || cmd == "yes") 
-			{
-				this->upFile(filename);
-			}
-		}
-		*/
+		
 		cout << "Put " << path_each << "?(y-yes/else-no): ";
 		cin.sync(); //flush \n
 		getline(cin, cmd);

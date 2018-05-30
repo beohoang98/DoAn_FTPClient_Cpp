@@ -59,8 +59,8 @@ void Eptipi::connectServer(const wchar_t * serverAddr)
 	UINT port; // unused
 	cmdConn.GetSockName(hostname_buf, port);
 
-	wstring whostname = hostname_buf;
-	client_addr.assign(whostname.begin(), whostname.end());
+	this->server_addr = hostname_buf;
+	client_addr.assign(this->server_addr.begin(), this->server_addr.end());
 	replace(client_addr.begin(), client_addr.end(), '.', ',');
 }
 
@@ -188,7 +188,7 @@ bool Eptipi::receiveOneLine() {
 	memset(buffer, 0, BUFFER_LENGTH);
 	pos = &buffer[0];
 
-	while (cmdConn.Receive(pos, 1)) {
+	while (cmdConn.Receive(pos, 1) > 0) {
 		char c = *pos;
 
 		if (c == '\n') {
@@ -199,6 +199,9 @@ bool Eptipi::receiveOneLine() {
 	}
 	if (pos == buffer) {
 		//disconnect to server
+		cout << "\terror, may be server is disconnected" << endl;
+		cmdConn.Close();
+		this->isConnect = false;
 		return false;
 	}
 
@@ -252,6 +255,8 @@ bool Eptipi::receiveOneLine() {
 		//disconnect
 		cmdConn.Close();
 		this->isConnect = false;
+		cout << "\tServer disconnected" << endl;
+		return false;
 	}
 
 	return isContinueStatus;
@@ -304,7 +309,7 @@ string Eptipi::getReturnStr() {
 CSocket * Eptipi::openActivePortAndConnect() {
 	CSocket * newSocket = new CSocket();
 	CString hostname_buffer;
-	UINT port;
+	UINT port = 0;
 	short p1, p0; // split port
 	stringstream request;
 
@@ -396,21 +401,25 @@ void Eptipi::openDataPort(bool (*beforeConnect)(CallbackInfo&), void (*afterConn
 		transferPort = openActivePortAndConnect();
 		CSocket server;
 
-		if (transferPort != NULL) {
-			isResponseOK = beforeConnect(cb);
+		if (transferPort == NULL)
+		{
+			cout << "\tCannot open active port to server\n\tTry with Passive mode with `mode P`" << endl;
+			return;
+		}
+
+		isResponseOK = beforeConnect(cb);
 			
-			if (!transferPort->Accept(server, (SOCKADDR*)this->server_addr.c_str()))
-			{
-				afterConnect(cb);
-			}
-			else 
-			{
-				cb.dataCon = &server;
-				
-				if (isResponseOK) afterConnect(cb);
-				
-				server.Close();
-			}
+		if (!transferPort->Accept(server, (SOCKADDR*)this->server_addr.c_str()))
+		{
+			afterConnect(cb);
+		}
+		else 
+		{
+			cb.dataCon = &server;
+			
+			if (isResponseOK) afterConnect(cb);
+			
+			server.Close();
 		}
 	}
 	else {
@@ -451,6 +460,12 @@ void Eptipi::handleCmd(string cmd, string path)
 
 	//do cmd dont need connected
 	if (cmd == "open") {
+		if (this->isConnect)
+		{
+			cout << "\tVan dang trong ket noi\n\tSu dung `disconnect` de logout khoi server hien tai\n";
+			return;
+		}
+
 		if (path == "") {
 			showHelpFor(cmd);
 			return;
@@ -599,22 +614,6 @@ void Eptipi::handleCmd(string cmd, string path)
 	{
 		this->printServerPath();
 	}
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-	else {
-		cout << "\tunknown command, type help to show all command\n\n";
-=======
-	else if (cmd == "mdel")
-	{
-		this->xoaNhieuFile(path);
-	}
-	else if (cmd == "mput")
-	{
-		this->upNhieuFile(path);
->>>>>>> Stashed changes
-	}
->>>>>>> Stashed changes
 }
 
 

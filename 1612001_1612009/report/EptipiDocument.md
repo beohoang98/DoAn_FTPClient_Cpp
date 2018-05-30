@@ -1,51 +1,112 @@
 # <center>CLASS EPTIPI</center>
 
+## MENU
+
 - [CLASS MEMBER](#class-member)
 
-- [BASIC FUNCTION USED FOR ALL](#basic-function)
+- [HÀM CHÍNH](#main-function)
 
-- [MAIN FUNCTION](#main-function)
-	- [Construct](#void-eptipi--eptipi)
+	- [Khởi tạo](#eptipi-eptipi)
 
-	- [Connect to server](#void-eptipi--connectserverconst-wchar-t-serveraddr)
+	- [Kết nối lên server](#eptipi-connectserver)
 
-	- [Login](#bool-eptipi--login)
+	- [Login](#eptipi-login)
 
-- [OPEN DATA PORT](#open-data-port)
+	- [Thực hiện lệnh nhập vào từ người dùng](#eptipi-handlecmd)
+
+- [CÁC HÀM BÊN DƯỚI](#advance-function)
+
+	- [lietKeChiTiet(std:string path)](#eptipi-dir)
+
+	- [lietKeDonGian(std:string path)](#eptipi-ls)
+
+	- [changeServerDir(std:string path)](#eptipi-cd)
+	
+	- [printServerDir(std:string path)](#eptipi-pwd)
+
+	- [changeClientDir(std:string path)](#eptipi-lcd)
+
+	- [CÁC HÀM HỖ TRỢ MỞ DATA CONNECTION](#open-data-port)
+
+- [CÁC HÀM CƠ BẢN BÊN DƯỚI NỮA](#basic-function)
+
+	- [Eptipi::sendCmd(std::string)](#eptipi-sendCmd)
+
+	- [Eptipi::receiveOneLine()](#eptipi-receiveoneline)
+
+	- [Eptipi::receiveStatus()](#eptipi-receivestatus)
 
 ---
 
 ## CÁC HẰNG SỐ VÀ SUBCLASS
-- **enum** FTPCode
+- ### enum `FTPCode`
 	- Các hằng số mã trả về cơ bản của **ftp**
 
 		```cpp
-		CONNECT_SUCCESS = 220,
-		LOGIN_SUCCESS = 230,
-		LOGIN_FAILED = 530,
-		OPEN_PASV_PORT = 227,
-		OPEN_LPSV_PORT = 228,
-		OPEN_ESPV_PORT = 229,
-		COMMAND_SUCCESS = 200,
-		CANNOT_OPEN_DATA_CONNECT = 425,
-		READY_TRANSFER = 150,
-		TRANSFER_SUCCESS = 226,
-		FILE_STATUS = 213,
-		CONNECT_FAILED = 421
+		enum FTPCode {
+			CONNECT_SUCCESS = 220,
+
+			LOGIN_SUCCESS 	= 230,
+			LOGIN_FAILED 	= 530,
+
+			OPEN_PASV_PORT 	= 227,
+			OPEN_LPSV_PORT 	= 228,
+			OPEN_ESPV_PORT 	= 229,
+
+			COMMAND_SUCCESS = 200,
+			CANNOT_OPEN_DATA_CONNECT = 425,
+
+			DATA_ALREADY_OPEN 	= 125,
+			READY_TRANSFER 		= 150,
+			TRANSFER_SUCCESS 	= 226,
+
+			CWD_SUCCESS = 250,
+
+			FILE_STATUS = 213,
+
+			DISCONNECT = 421
+		};
 		```
+
+- ### namspace `FTPDataMode`
+	
+	- Dùng để khởi tạo Hằng số các trạng thái ACTIVE và PASSIVE
+	
+	```cpp
+	namespace FTPDataMode {
+		const UCHAR PASSIVE = 0;
+		const UCHAR ACTIVE = 1;
+		const UCHAR DEFAULT = PASSIVE;
+	}
+	```
+
+- ### namspace `FTPFileMode`
+	
+	- Dùng để khởi tạo Hằng số các trạng thái ACTIVE và PASSIVE
+	
+	```cpp
+	namespace FTPFileMode {
+		const UCHAR BINARY = 0;
+		const UCHAR ASCII = 1;
+		const UCHAR DEFAULT = BINARY;
+	}
+	```
+
 - **BUFFER_LENGTH** = 512
+	
 	- Độ lớn mặc định của buffer dùng để đọc thông tin server gửi về
+
 - **struct** CallbackInfo
 	- Dùng để truyền dữ liệu cần thiết khi gọi [Eptipi::openDataPort](#open-data-port)
 	
-		```cpp
-		struct CallbackInfo {
-			std::string path = "";
-			Eptipi * mainFTP = NULL;
-			CSocket * dataCon = NULL;
-			int filesize = 0;
-		};
-		```
+	```cpp
+	struct CallbackInfo {
+		std::string path = "";
+		Eptipi * mainFTP = NULL;
+		CSocket * dataCon = NULL;
+		UINT64 filesize = 0;
+	};
+	```
 ----
 
 ## CLASS MEMBER
@@ -96,12 +157,16 @@
 
 ## MAIN FUNCTION
 
-- ### `Eptipi::Eptipi()`	
+<a name='eptipi-eptipi'></a>
+
+- ### `Eptipi::Eptipi()`
 	Khởi tạo class Eptipi.
 
 	Các member trong class sẽ có giá trị mặc định.
 
 	Chưa kết nối với server nào hết.
+
+<a name='eptipi-connectserver'></a>
 
 - ### `void Eptipi::connectServer(const wchar_t* serverAddr)`
 
@@ -109,16 +174,31 @@
 
 	Throw **exception** khi không thể kết nối.
 
+<a name='eptipi-login'></a>
 - ### `bool Eptipi::login()`
 	Tạo prompt đăng nhập (username/password) trên màn hình **console**
 
 	Trả về **false** khi đăng nhập thất bại
 
+<a name='eptipi-handlecmd'></a>
 - ### `void Eptipi::handleCmd(std::string cmd, std::string path)`
+	
 	Thực thi theo lệnh truyền vào `cmd`, với các tham số lệnh trong chuỗi `path`
 
-	Để biết các lệnh `cmd` hợp lệ, xem [Eptipi::showAllCmd()](###void-eptipi--showallcmd)
+	Để biết các lệnh `cmd` hợp lệ, xem [Eptipi::showAllCmd()](#eptipi-showallcmd)
 
+
+<a name='eptipi-showallcmd'></a>
+- ### `void Eptipi::showAllCmd()`
+	Liệt kê tất cả các `command` hợp lệ của chương trình lên màn hình console
+
+---
+
+<a name="advance-function"></a>
+
+## CÁC HÀM BÊN DƯỚI
+
+<a name='eptipi-dir'></a>
 - ### `void Eptipi::lietKeChiTiet()`
 	In ra màn hình danh sách **chi tiết** directory của path hiện tại trên server
 
@@ -126,6 +206,7 @@
 	- Sử dụng lệnh LIST của **ftp protocal command**
 	- In ra màn hình console
 
+<a name='eptipi-ls'></a>
 - ### `void Eptipi::lietKeDonGian()`
 	In ra màn hình danh sách tên của thư mục và file ở directory hiện tại trên server
 
@@ -133,20 +214,24 @@
 	- Sử dụng lệnh NLST của **ftp protocal command**
 	- In ra màn hình console
 
+<a name='eptipi-ldir'></a>
 - ### `void Eptipi::lietKeClientChiTiet()`
 
+<a name='eptipi-lls'></a>
 - ### `void Eptipi::lietKeClientDonGian()`
 
+<a name='eptipi-cd'></a>
 - ### `void Eptipi::changeServerDir(std::string path)`
 
+<a name='eptipi-lcd'></a>
 - ### `void Eptipi::changeClientDir(std::string path)`
 
-- ### `void Eptipi::showAllCmd()`
-	Liệt kê tất cả các `command` hợp lệ của chương trình lên màn hình console
 
 ---
 
-## OPEN DATA PORT
+<a name="open-data-port"></a>
+
+## CÁC HÀM HỖ TRỢ MỞ DATA CONNECTION
 
 - ## `protected CSocket * openPassivePortAndConnect();`
 	Mở một Passive connection và trả về địa chỉ của Socket vừa kết nối.
@@ -195,16 +280,18 @@
 	
 		```cpp
 		// Vi du cho lenh `dir`
-
 		struct deKhaiBaoHam {
 			static bool before(CallbackInfo &cb) {
-				cb.mainFTP->sendCmd("LIST\r\n");
-				cb.mainFTP->receiveOneLine();
+				cb.mainFTP->sendCmd("LIST "+cb.path+"\r\n");
+				cb.mainFTP->receiveStatus();
 				cout << '\t' << cb.mainFTP->getReturnStr() << endl;
-				if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER)
+
+				if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER 
+					&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
 					return false;
 				return true;
 			};
+
 			static void after(CallbackInfo &cb) {
 				if (cb.dataCon == NULL) return;
 
@@ -217,17 +304,13 @@
 			}
 		};
 
-		//ascii mode
-		this->sendCmd("TYPE A\r\n"); 
-		this->receiveOneLine();
+		this->sendCmd("TYPE A\r\n"); //ascii mode
+		this->receiveStatus();
 
-		// thong tin truyen vao callback
-		// truyen this vao mainFTP de su dung lai cac ham viet san
 		CallbackInfo cb;
+		cb.path = path;
 		cb.mainFTP = this;
-
-		//goi ham
-		openDataPort(deKhaiBaoHam::before, deKhaiBaoHam::after, cb);
+		openDataPort(deKhaiBaoHam::before, deKhaiBaoHam::after, cb);	
 		```
 
 ---

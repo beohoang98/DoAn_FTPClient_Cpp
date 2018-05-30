@@ -11,3 +11,11 @@ ipch/
 .vscode
 .vs
 */forTest_get/*
+*/*.log
+*/*.lib
+*/*.obj
+*/*.sdf
+*/*.tlog
+*/*.pdb
+*/*.pch
+*/*.aps
