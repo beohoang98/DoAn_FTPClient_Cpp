@@ -8,10 +8,10 @@
 #include<Windows.h>
 #include "stdafx.h"
 #include "eptipi.h"
-#define _CRT_SECURE_NO_WARNINGS
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <vector>
 
 #include "ProgressBar.h"
 #include<stdio.h>
@@ -411,37 +411,36 @@ void Eptipi::upNhieuFile(string fileNames)
 /*------------------------------------------
 	mget
 */
+
+
 void Eptipi::downNhieuFile(string fileNames)
 {
-	struct GetFileList {
-		static bool before(CallbackInfo& cb) {
-			cb.mainFTP->sendCmd("NLST " + cb.path + "\r\n");
-			cb.mainFTP->receiveStatus();
-			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
-
-			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER
-				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
-				return false;
-			return true;
-		};
-		static void after(CallbackInfo& cb) {
-			if (cb.dataCon == NULL)
-				return;
-
-			cb.path = "";
-			char buffer[BUFFER_LENGTH] = { 0 };
-			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1)) {
-				cb.path += buffer;
-			}
-		}
-	};
-
-	stringstream split_path(fileNames);
-	string path_each;
-	string filename;
+	vector<string> nameList;
+	vector<string> dirList;
 	string cmd;
 	UCHAR isPrompt = true;
 
+	stringstream split_path(fileNames);
+	string path_each;
+
+	while (!split_path.eof())
+	{
+		getline(split_path, path_each, ' ');
+
+		vector<string> nameListEach = this->getNLST(path_each);
+		vector<string> dirListEach = this->getLIST(path_each);
+
+		nameList.insert(nameList.end(), nameListEach.begin(), nameListEach.end());
+		dirList.insert(dirList.end(), dirListEach.begin(), dirListEach.end());
+	}	
+	// nameList & dirList must be same size
+	if (nameList.size() != dirList.size())
+	{
+		cout << "Something went wrong" << endl;
+		return;
+	}
+	if (nameList.size() == 0) return;
+	
 	//ask user prompt or not
 	cout << "Do you want open prompt for each file?(y-yes, else-no) ";
 	cin >> cmd;
@@ -449,32 +448,23 @@ void Eptipi::downNhieuFile(string fileNames)
 	if (cmd != "y" && cmd != "yes")
 		isPrompt = false;
 
-	while (!split_path.eof()) {
-		getline(split_path, path_each, ' ');
+	for (size_t i = 0, length = nameList.size(); i < length; ++i)
+	{
+		if (dirList[i][0] != 'd')
+		{
+			//is not directory
+			//maybe is file...
+			if (isPrompt)
+			{
+				cout << "Get " << nameList[i] << " (y-yes,else-no)? ";
+				getline(cin, cmd);
+				cin.sync();
 
-		CallbackInfo cb;
-		cb.mainFTP = this;
-		cb.path = path_each;
-		openDataPort(GetFileList::before, GetFileList::after, cb);
-
-		stringstream forSplitFile(cb.path);
-
-		while (!forSplitFile.eof()) {
-			getline(forSplitFile, filename, '\r');
-			if (filename[0] == '\n') filename.erase(0, 1);
-			if (filename == "") break;
-
-			if (!isPrompt) {
-				this->downFile(filename);
-				continue;
+				if (cmd != "yes" && cmd != "y")
+					continue;
 			}
-
-			cout << "Get " << filename << "?(y-yes/else-no): ";
-			cin.sync(); //flush \n
-			getline(cin, cmd);
-			if (cmd == "y" || cmd == "yes") {
-				this->downFile(filename);
-			}
+			else
+				this->downFile(nameList[i]);
 		}
 	}
 
