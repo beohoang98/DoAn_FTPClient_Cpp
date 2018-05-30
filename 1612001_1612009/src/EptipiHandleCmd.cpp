@@ -5,7 +5,7 @@
 */
 
 #pragma once
-
+#include<Windows.h>
 #include "stdafx.h"
 #include "eptipi.h"
 #define _CRT_SECURE_NO_WARNINGS
@@ -14,7 +14,9 @@
 #include <iomanip>
 
 #include "ProgressBar.h"
-
+#include<stdio.h>
+#include<string>
+#include<iostream>
 using namespace std;
 
 
@@ -168,10 +170,7 @@ void Eptipi::printClientPath()
 void Eptipi::upFile(string fileName)
 {
 	struct ASD {
-		/*
-		thuc hien cau lenh de su dung data port
-		@param (cb) du lieu luu lai de callback
-		*/
+		
 		static bool before(CallbackInfo&cb)
 		{
 			cb.mainFTP->sendCmd("STOR "+cb.path+"\r\n");
@@ -184,10 +183,6 @@ void Eptipi::upFile(string fileName)
 			return true;
 		};
 
-		/*
-		thuc hien sau khi port duoc connect thanh cong
-		@param (cb) du lieu callback luu lai bao gom dataCon(data port da connect)
-		*/
 		static void after(CallbackInfo&cb)
 		{
 			if (cb.dataCon == NULL)
@@ -195,15 +190,20 @@ void Eptipi::upFile(string fileName)
 			int bytes = 0;
 			char buffer[BUFFER_LENGTH];
 			memset(buffer, 0, BUFFER_LENGTH);
+			UINT64 filesize = 0;
 
 			//create new file
 			ifstream fileinp(cb.path, ios::binary);
 			if (!fileinp.is_open()) 
 			{
-				cout << "\tError: cannot save uploaded file\n\n";
+				cout << "\tError: cannot open file\n\n";
 				return;
 			}
-			UINT64 filesize = fileinp.gcount();
+			fileinp.seekg(0, ios::end);
+			cb.filesize = fileinp.tellg();//total size
+			fileinp.seekg(0, ios::beg);
+
+
 			ProgressBar display;
 			display.setBarSize(20);
 			display.setTotalSize(cb.filesize);
@@ -234,11 +234,12 @@ void Eptipi::upFile(string fileName)
 	ifstream fileinp(fileName, ios::binary);
 	if (!fileinp.is_open())
 	{
-		cout << "\tError: cannot save uploaded file\n\n";
+		cout << "\tError: cannot open file\n\n";
 		return;
 	}
 	else
 		fileinp.close();
+
 	openDataPort(ASD::before, ASD::after, callbackparam);
 }
  
@@ -361,13 +362,47 @@ void Eptipi::upNhieuFile(string fileNames)
 	{
 		getline(split_path, path_each, ' ');
 		
-		cout << "Put " << path_each << "?(y-yes/else-no): ";
-		cin.sync(); //flush \n
-		getline(cin, cmd);
-		if (cmd == "y" || cmd == "yes")
+		char buf[100];
+		GetCurrentDirectoryA(100,buf);
+		string sDir = buf;
+		WIN32_FIND_DATAA fdFile;
+		HANDLE hFind = NULL;
+		string sPath;
+		sPath = sDir + "\\" + path_each;
+		if ((hFind = FindFirstFileA(sPath.c_str(), &fdFile)) == INVALID_HANDLE_VALUE)
 		{
-			this->upFile(path_each);
+			cout << "Path not found:" << sDir << endl;
+			//return false;
 		}
+
+		do
+		{
+			if (strcmp(fdFile.cFileName, ".") != 0
+				&& strcmp(fdFile.cFileName, "..") != 0)
+			{
+				sPath = sDir + "\\" + fdFile.cFileName;
+				if (fdFile.dwFileAttributes &FILE_ATTRIBUTE_DIRECTORY)
+				{
+				}
+				else{
+					//cout << sPath.substr(sDir.length() + 1, sPath.length()) << endl;
+					filename = sPath.substr(sDir.length() + 1, sPath.length());
+					
+					if (isPrompt)
+					{
+						cout << "Put " << filename << "?(y-yes/else-no): ";
+						cin.sync(); //flush \n
+						getline(cin, cmd);
+					}
+					if (!isPrompt || cmd == "y" || cmd == "yes")
+					{
+						this->upFile(filename);
+					}
+				}
+			}
+		} while (FindNextFileA(hFind, &fdFile)); //Find the next file.
+
+		FindClose(hFind); //Always, Always, clean things up!
 	}
 
 	cout << endl;

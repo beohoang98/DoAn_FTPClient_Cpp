@@ -618,6 +618,14 @@ void Eptipi::handleCmd(string cmd, string path)
 	{
 		this->printServerPath();
 	}
+	else if (cmd == "mdel")
+	{
+		this->xoaNhieuFile(path);
+	}
+	else if (cmd == "mput")
+	{
+		this->upNhieuFile(path);
+	}
 }
 
 
