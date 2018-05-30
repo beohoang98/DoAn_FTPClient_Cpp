@@ -70,7 +70,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 
 					Client.handleCmd(user_cmd, user_path); //include quit
 
-					if (user_cmd == "quit")
+					if (user_cmd == "quit" || user_cmd == "bye")
 						break;
 
 					user_cmd = "";
