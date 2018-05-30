@@ -10,6 +10,7 @@
 #include "resource.h"
 #include <afxsock.h>
 #include <iostream>
+#include <vector>
 
 #include "EptipiCommand.h"
 #include "EptipiConstants.h"
@@ -91,6 +92,11 @@ public:
 	void switchToActive();
 	void switchToBinary();
 	void switchToAscii();
+
+
+	// HAM HO TRO
+	vector<string> getNLST(string path);
+	vector<string> getLIST(string path);
 
 	~Eptipi();
 };
