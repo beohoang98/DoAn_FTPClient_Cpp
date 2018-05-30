@@ -599,6 +599,22 @@ void Eptipi::handleCmd(string cmd, string path)
 	{
 		this->printServerPath();
 	}
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+	else {
+		cout << "\tunknown command, type help to show all command\n\n";
+=======
+	else if (cmd == "mdel")
+	{
+		this->xoaNhieuFile(path);
+	}
+	else if (cmd == "mput")
+	{
+		this->upNhieuFile(path);
+>>>>>>> Stashed changes
+	}
+>>>>>>> Stashed changes
 }
 
 
