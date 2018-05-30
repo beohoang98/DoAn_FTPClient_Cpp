@@ -26,38 +26,13 @@ using namespace std;
 */
 void Eptipi::lietKeChiTiet(string path)
 {
-	struct deKhaiBaoHam {
-		
-		static bool before(CallbackInfo &cb) {
-			cb.mainFTP->sendCmd("LIST "+cb.path+"\r\n");
-			cb.mainFTP->receiveStatus();
-			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
+	vector<string> dirList = this->getLIST(path);
+	for (string &name : dirList)
+	{
+		cout << name << endl;
+	}
 
-			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER 
-				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
-				return false;
-			return true;
-		};
-
-		static void after(CallbackInfo &cb) {
-			if (cb.dataCon == NULL) return;
-
-			char buffer[BUFFER_LENGTH];
-			memset(buffer, 0, BUFFER_LENGTH);
-			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1) > 0) {
-				cout << buffer;
-				memset(buffer, 0, BUFFER_LENGTH);
-			}
-		}
-	};
-
-	this->sendCmd("TYPE A\r\n"); //ascii mode
-	this->receiveStatus();
-
-	CallbackInfo cb;
-	cb.path = path;
-	cb.mainFTP = this;
-	openDataPort(deKhaiBaoHam::before, deKhaiBaoHam::after, cb);
+	cout << endl;
 }
 
 /*------------------------------------------
@@ -66,44 +41,13 @@ void Eptipi::lietKeChiTiet(string path)
 */
 void Eptipi::lietKeDonGian(string path)
 {
-	struct ASD {
-		/*
-		thuc hien cau lenh de su dung data port
-		@param (cb) du lieu luu lai de callback
-		*/
-		static bool before(CallbackInfo &cb) {
-			cb.mainFTP->sendCmd("NLST " + cb.path +"\r\n");
-			cb.mainFTP->receiveStatus();
-			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
+	vector<string> nameList = this->getNLST(path);
+	for (string &name : nameList)
+	{
+		cout << name << endl;
+	}
 
-			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER
-				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
-				return false;
-			return true;
-		};
-		/*
-		thuc hien sau khi port duoc connect thanh cong
-		@param (cb) du lieu callback luu lai bao gom dataCon(data port da connect)
-		*/
-		static void after(CallbackInfo &cb) {
-			if (cb.dataCon == NULL) return;
-
-			char buffer[BUFFER_LENGTH];
-			memset(buffer, 0, BUFFER_LENGTH);
-			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1) > 0) {
-				cout << buffer;
-				memset(buffer, 0, BUFFER_LENGTH);
-			}
-		}
-	};
-
-	this->sendCmd("TYPE A\r\n"); //ascii mode
-	this->receiveStatus();
-
-	CallbackInfo cb;
-	cb.mainFTP = this;
-	cb.path = path;
-	openDataPort(ASD::before, ASD::after, cb);
+	cout << endl;
 }
  
 /*
