@@ -6,7 +6,7 @@
 */
 
 #pragma once
-
+#define _CRT_SECURE_NO_WARNINGS
 #include "resource.h"
 #include <afxsock.h>
 #include <iostream>
@@ -80,7 +80,7 @@ public:
 	void upNhieuFile(string fileNames); // mput
 	void downNhieuFile(string fileNames); // mget
 	void xoaFile(string filename);
-	
+	void xoaNhieuFile(string fileNames);//mdel
 	void taoFolder(string tenfolder);
 	void xoaFolder(string tenfolder);
 
