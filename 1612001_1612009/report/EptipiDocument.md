@@ -1,4 +1,4 @@
-# <center>CLASS EPTIPI</center>
+# CLASS EPTIPI
 
 ## MENU
 
@@ -26,6 +26,14 @@
 
 	- [changeClientDir(std:string path)](#eptipi-lcd)
 
+	- [downFile(std::string path)](#eptipi-downfile)
+
+	- [upFile(std::string path)](#eptipi-upfile)
+
+	- [downNhieuFile(std::string path)](#eptipi-downnhieufile)
+
+	- [upNhieuFile(std::string path)](#eptipi-upnhieufile)
+
 	- [CÁC HÀM HỖ TRỢ MỞ DATA CONNECTION](#open-data-port)
 
 - [CÁC HÀM CƠ BẢN BÊN DƯỚI NỮA](#basic-function)
@@ -36,6 +44,9 @@
 
 	- [Eptipi::receiveStatus()](#eptipi-receivestatus)
 
+	- [Các hàm get](#ham-get)
+
+	- [Các hàm hỗ trợ LIST và NLST](#ho-tro-ls-dir)
 ---
 
 ## CÁC HẰNG SỐ VÀ SUBCLASS
@@ -125,36 +136,6 @@
 
 ---
 
-## BASIC FUNCTION
-- ### `public void sendCmd(*std::string* cmd)`
-	Gửi chuỗi lệnh raw lên server thông qua **cmdConn**
-	
-	```cpp
-		cmdConn.Send(cmd.c_str(), cmd.length());
-	```
-- ### `public void sendCmd(*std::wstring* cmd)`
-	Tương tự như trên
-- ### `public void receiveAll()`
-	Nhận các phản hồi trên server xuống rồi sau đó truyền vào **returnStr**
-- ### `public void receiveOneLine()`
-	Nhận 1 phản hồi (1 dòng có kí tự cuối là *\n*) từ server xuống và xử lý phản hồi đó thành **returnCode**, **returnStr** và **returnPort**(nếu có). **VD**:
-	- **buffer** = 200 Command OK
-		- returnCode = 220
-		- returnStr = "200 Command OK"
-		- returnPort = -1
-	- **buffer** = 227 Entering Passive Port (127,0,0,1,25,5)
-		- returnCode = 227
-		- returnStr = *"227 Entering Passive Port (127,0,0,1,25,5)"*
-		- returnPort = 25*256 + 5 = 6405
-- ### `public int getCode()`
-	Trả về **returnCode**
-- ### `public std::string getReturnStr()`
-	Trả về **returnStr**
-- ### `public int getReturnPort()`
-	Trả về **returnPort**
-
----
-
 ## MAIN FUNCTION
 
 <a name='eptipi-eptipi'></a>
@@ -175,12 +156,14 @@
 	Throw **exception** khi không thể kết nối.
 
 <a name='eptipi-login'></a>
+
 - ### `bool Eptipi::login()`
 	Tạo prompt đăng nhập (username/password) trên màn hình **console**
 
 	Trả về **false** khi đăng nhập thất bại
 
 <a name='eptipi-handlecmd'></a>
+
 - ### `void Eptipi::handleCmd(std::string cmd, std::string path)`
 	
 	Thực thi theo lệnh truyền vào `cmd`, với các tham số lệnh trong chuỗi `path`
@@ -189,6 +172,7 @@
 
 
 <a name='eptipi-showallcmd'></a>
+
 - ### `void Eptipi::showAllCmd()`
 	Liệt kê tất cả các `command` hợp lệ của chương trình lên màn hình console
 
@@ -199,6 +183,7 @@
 ## CÁC HÀM BÊN DƯỚI
 
 <a name='eptipi-dir'></a>
+
 - ### `void Eptipi::lietKeChiTiet()`
 	In ra màn hình danh sách **chi tiết** directory của path hiện tại trên server
 
@@ -206,7 +191,18 @@
 	- Sử dụng lệnh LIST của **ftp protocal command**
 	- In ra màn hình console
 
+	**Sử dụng**:
+
+	```cpp
+	Eptipi FTP;
+	///....
+	///da connect va login
+	FTP.lietKeChiTiet("*.txt"); //liet tat ca cac file txt
+	///...
+	```
+
 <a name='eptipi-ls'></a>
+
 - ### `void Eptipi::lietKeDonGian()`
 	In ra màn hình danh sách tên của thư mục và file ở directory hiện tại trên server
 
@@ -214,18 +210,145 @@
 	- Sử dụng lệnh NLST của **ftp protocal command**
 	- In ra màn hình console
 
+	**Sử dụng**:
+
+	```cpp
+	Eptipi FTP;
+	///....
+	///da connect va login
+	FTP.lietKeDonGian("*.txt"); //liet tat ca cac file txt
+	///...
+	```
+
 <a name='eptipi-ldir'></a>
+
 - ### `void Eptipi::lietKeClientChiTiet()`
+	In ra màn hình danh sách tên của thư mục và file ở directory hiện tại trên client
+	
+	- Sử dụng lệnh system của STL (trên windows)
+	- In ra màn hình console
 
 <a name='eptipi-lls'></a>
+
 - ### `void Eptipi::lietKeClientDonGian()`
+	In ra màn hình danh sách tên của thư mục và file ở directory hiện tại trên client
+	
+	- Sử dụng lệnh system của STL (trên windows)
+	- In ra màn hình console
 
 <a name='eptipi-cd'></a>
+
 - ### `void Eptipi::changeServerDir(std::string path)`
 
+	Thay đổi đường dẫn trên server
+
 <a name='eptipi-lcd'></a>
+
 - ### `void Eptipi::changeClientDir(std::string path)`
 
+	Thay đổi đường dẫn ở client
+
+<a name='eptipi-downfile'></a>
+
+- ### `void Eptipi::downFile(std::string path)`
+
+	Download file có đường dẫn `path` trên server về folder hiện hành của client
+
+	```cpp
+	this->downFile("a.txt");
+	```
+
+<a name='eptipi-upfile'></a>
+
+- ### `void Eptipi::upFile(std::string path)`
+
+	Upload một file có đường dẫn `path` ở client lên server 
+
+	```cpp
+	this->upFile("a.rar");
+	```
+
+<a name='eptipi-downnhieufile'></a>
+
+- ### `void Eptipi::downNhieuFile(std::string path)`
+
+	Download những file có đường dẫn trong `path` từ server về client
+
+	```cpp
+	this->downNhieuFile("*.txt a.rar b.zip *.mp*");
+	// *.txt 	- tat ca file text
+	// a.rar b.zip	- 2 file co ten cu the
+	// *.mp* 	- tat ca file nhac, video (mp3, mp4)
+	```
+
+<a name='eptipi-upnhieufile'></a>
+
+- ### `void Eptipi::upNhieuFile(std::string path)`
+
+	Upload những file có đường dẫn trong `path` từ client lên server
+
+	```cpp
+	this->upNhieuFile("*.txt a.rar b.zip *.mp*");
+	// *.txt 		- tat ca file text
+	// a.rar b.zip 		- 2 file co ten cu the
+	// *.mp* 		- tat ca file nhac, video (mp3, mp4)
+	```
+
+---
+
+<a name="basic-function"></a>
+
+## CÁC HÀM HỖ TRỢ BÊN DƯỚI NỮA
+
+- ### `public void sendCmd(*std::string* cmd)`
+
+	Gửi chuỗi lệnh raw lên server thông qua **cmdConn**
+	
+	```cpp
+		cmdConn.Send(cmd.c_str(), cmd.length());
+	```
+- ### `public void sendCmd(*std::wstring* cmd)`
+
+	Tương tự như trên
+
+- ### `public void receiveAll()`
+
+	Nhận các phản hồi trên server xuống rồi sau đó truyền vào **returnStr**
+
+- ### `public void receiveOneLine()`
+
+	Nhận 1 phản hồi (1 dòng có kí tự cuối là *\n*) từ server xuống và xử lý phản hồi đó thành **returnCode**, **returnStr** và **returnPort**(nếu có). **VD**:
+
+	- **buffer** = 200 Command OK
+
+		- `returnCode = 220`
+		- `returnStr = "200 Command OK"`
+		- `returnPort = -1`
+
+	- **buffer** = 227 Entering Passive Port (127,0,0,1,25,5)
+
+		- `returnCode = 227`
+		- `returnStr = "227 Entering Passive Port (127,0,0,1,25,5)"`
+		- `returnPort = 25*256 + 5 = 6405`
+
+<a name="ham-get"></a>
+
+- ### `public int getCode()`
+	Trả về **returnCode**
+- ### `public std::string getReturnStr()`
+	Trả về **returnStr**
+- ### `public int getReturnPort()`
+	Trả về **returnPort**
+
+<a name="ho-tro-ls-dir"></a>
+
+- ### `std::vector<std::string> getLIST(std::string path)`
+	
+	Sử dụng như lệnh [`dir`](#eptipi-dir), lưu kết quả vào vector, không in ra
+
+- ### `std::vector<std::string> getNLST(std::string path)`
+	
+	Sử dụng như lệnh [`ls`](#eptipi-ls), lưu kết quả vào vector, không in ra
 
 ---
 

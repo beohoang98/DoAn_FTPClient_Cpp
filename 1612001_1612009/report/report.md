@@ -1,5 +1,18 @@
-# BÁO CÁO ĐỒ ÁN
-**[Github](https://github.com/beohoang98/DoAn_FTPClient_Cpp)**
+# <center> BÁO CÁO ĐỒ ÁN </center>
+<div style="float: right">
+
+[Github](https://github.com/beohoang98/DoAn_FTPClient_Cpp)
+
+</div>
+
+## <center>VIẾT CHƯƠNG TRÌNH FTP</center>
+
+## HĐH: Windows 10
+
+### TRÊN: Console
+### IDE: Visual Studio 2013
+
+---
 
 ## THÀNH VIÊN
 
@@ -10,21 +23,21 @@ Nguyễn Phước An | 1612009 	|[phuocantd](https://github.com/phuocantd)
 
 ## PHÂN CHIA CÔNG VIỆC
 
-STT		|	CÔNG VIỆC						| Người đảm nhiệm
----:	|---								|---
-1		|Thiết kế flow chương trình chính 	|Dân An
-2		|Thiết kế OOP cho chương trình		|Dân An
-3		|Tạo các hàm xử lý giao thức cơ bản	|Dân An
-4		|Phân chia thư mục và tạo project	|Phước An
+STT		|	CÔNG VIỆC							| Người đảm nhiệm
+---:	|---									|---
+1		|Thiết kế flow chương trình chính 		|Dân An
+2		|Thiết kế OOP cho chương trình			|Dân An
+3		|Tạo các hàm xử lý giao thức cơ bản		|Dân An
+4		|Phân chia thư mục và project			|Phước An
 5		|Viết các hàm cd, lcd, pwd, mdelete, mkdir, rmdir, quit, exit | Phước An
 6		|Viết hàm xử lý mở port, active, passive |Dân An
-7		|Viết các hàm put, mput				|Phước An
-8		|Viết các hàm get, mget				|Dân An
+7		|Viết các hàm put, mput					|Phước An
+8		|Viết các hàm get, mget					|Dân An
 9		|Viết câu lệnh help và description cho các câu lệnh ftp | Cả hai
-10		|Quản lý git cho mã nguồn			|Dân An
-11		|Phụ trách document					|Cả hai
-12		|Phụ trách ngoại giao (*copy ý tưởng team khác*) |Phước An
-13		|Test lỗi và tìm bug				|Phước An
+10		|Quản lý mã nguồn						|Dân An
+11		|Phụ trách document						|Cả hai
+12		|Phụ trách ngoại giao (*tham khảo ý tưởng team khác*) |Phước An
+13		|Test lỗi và tìm bug					|Phước An
 
 ## ĐÁNH GIÁ MỨC ĐỘ HOÀN THÀNH
 
@@ -33,17 +46,19 @@ STT		|	Chức năng					| Hoàn thành
 1		|Kết nối và login đến server	|1
 2		|Xử lý đầy đủ các câu lệnh		|1
 3		|Câu lệnh ls, dir				|1
-4		|Câu lệnh cd, lcd, pwd, lpwd	|1
-5		|put							|0
-6		|mput							|0
+4		|Câu lệnh cd, lcd, pwd			|1
+5		|put							|1
+6		|mput							|1
 7		|get							|1
 8		|mget							|1
-9		|delete							|1
-10		|mdelete						|0
+9		|del							|1
+10		|mdel							|1
 11		|mkdir							|1
 12		|rmdir							|1
-13		|Cơ chế passive và active		|1
-|**Tổng**|**69%**
+13		|Cơ chế passive					|1
+14		|Cơ chế active (LAN)			|1
+15		|Cơ chế active (WAN)			|0
+|**Tổng**|**93%**
 
 \newpage
 
@@ -357,5 +372,6 @@ VD: Khi xử lý lệnh `dir` sẽ là
 
 - [Passive and Active in ftp](http://slacksite.com/other/ftp.html)
 
+- [How to list directory in windows](https://stackoverflow.com/a/2315808/8699894)
 
 [callback]: #CallbackParam
