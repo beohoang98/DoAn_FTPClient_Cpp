@@ -98,6 +98,8 @@ public:
 	vector<string> getNLST(string path);
 	vector<string> getLIST(string path);
 
+	static void trimPath(string &path);
+
 	~Eptipi();
 };
 

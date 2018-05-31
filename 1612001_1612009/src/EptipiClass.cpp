@@ -753,3 +753,35 @@ vector<string> Eptipi::getNLST(string path)
 
 	return result;
 }
+
+
+/*
+* trim string : delete unused space
+* @param: path need to trim and return to it
+*/
+void Eptipi::trimPath(string &path)
+{
+	string result;
+	int countSpace = 0;
+	int pos_start = 0;
+	int length = path.length();
+
+	while (path[pos_start] == ' ' && pos_start < length)
+		++pos_start;
+
+	for (int i = pos_start; i < length; ++i)
+	{
+		if (path[i] == ' ') {
+			if (countSpace == 0)
+			{
+				result.push_back(path[i]);
+			}
+			++countSpace;
+		}
+		else {
+			countSpace = 0;
+			result.push_back(path[i]);
+		}
+	}
+	path = result;
+}
