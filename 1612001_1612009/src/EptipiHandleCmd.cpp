@@ -5,16 +5,18 @@
 */
 
 #pragma once
-
+#include<Windows.h>
 #include "stdafx.h"
 #include "eptipi.h"
-#define _CRT_SECURE_NO_WARNINGS
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <vector>
 
 #include "ProgressBar.h"
-
+#include<stdio.h>
+#include<string>
+#include<iostream>
 using namespace std;
 
 
@@ -24,38 +26,13 @@ using namespace std;
 */
 void Eptipi::lietKeChiTiet(string path)
 {
-	struct deKhaiBaoHam {
-		
-		static bool before(CallbackInfo &cb) {
-			cb.mainFTP->sendCmd("LIST "+cb.path+"\r\n");
-			cb.mainFTP->receiveStatus();
-			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
+	vector<string> dirList = this->getLIST(path);
+	for (string &name : dirList)
+	{
+		cout << name << endl;
+	}
 
-			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER 
-				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
-				return false;
-			return true;
-		};
-
-		static void after(CallbackInfo &cb) {
-			if (cb.dataCon == NULL) return;
-
-			char buffer[BUFFER_LENGTH];
-			memset(buffer, 0, BUFFER_LENGTH);
-			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1) > 0) {
-				cout << buffer;
-				memset(buffer, 0, BUFFER_LENGTH);
-			}
-		}
-	};
-
-	this->sendCmd("TYPE A\r\n"); //ascii mode
-	this->receiveStatus();
-
-	CallbackInfo cb;
-	cb.path = path;
-	cb.mainFTP = this;
-	openDataPort(deKhaiBaoHam::before, deKhaiBaoHam::after, cb);
+	cout << endl;
 }
 
 /*------------------------------------------
@@ -64,44 +41,13 @@ void Eptipi::lietKeChiTiet(string path)
 */
 void Eptipi::lietKeDonGian(string path)
 {
-	struct ASD {
-		/*
-		thuc hien cau lenh de su dung data port
-		@param (cb) du lieu luu lai de callback
-		*/
-		static bool before(CallbackInfo &cb) {
-			cb.mainFTP->sendCmd("NLST " + cb.path +"\r\n");
-			cb.mainFTP->receiveStatus();
-			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
+	vector<string> nameList = this->getNLST(path);
+	for (string &name : nameList)
+	{
+		cout << name << endl;
+	}
 
-			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER
-				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
-				return false;
-			return true;
-		};
-		/*
-		thuc hien sau khi port duoc connect thanh cong
-		@param (cb) du lieu callback luu lai bao gom dataCon(data port da connect)
-		*/
-		static void after(CallbackInfo &cb) {
-			if (cb.dataCon == NULL) return;
-
-			char buffer[BUFFER_LENGTH];
-			memset(buffer, 0, BUFFER_LENGTH);
-			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1) > 0) {
-				cout << buffer;
-				memset(buffer, 0, BUFFER_LENGTH);
-			}
-		}
-	};
-
-	this->sendCmd("TYPE A\r\n"); //ascii mode
-	this->receiveStatus();
-
-	CallbackInfo cb;
-	cb.mainFTP = this;
-	cb.path = path;
-	openDataPort(ASD::before, ASD::after, cb);
+	cout << endl;
 }
  
 /*
@@ -168,10 +114,7 @@ void Eptipi::printClientPath()
 void Eptipi::upFile(string fileName)
 {
 	struct ASD {
-		/*
-		thuc hien cau lenh de su dung data port
-		@param (cb) du lieu luu lai de callback
-		*/
+		
 		static bool before(CallbackInfo&cb)
 		{
 			cb.mainFTP->sendCmd("STOR "+cb.path+"\r\n");
@@ -184,10 +127,6 @@ void Eptipi::upFile(string fileName)
 			return true;
 		};
 
-		/*
-		thuc hien sau khi port duoc connect thanh cong
-		@param (cb) du lieu callback luu lai bao gom dataCon(data port da connect)
-		*/
 		static void after(CallbackInfo&cb)
 		{
 			if (cb.dataCon == NULL)
@@ -195,15 +134,20 @@ void Eptipi::upFile(string fileName)
 			int bytes = 0;
 			char buffer[BUFFER_LENGTH];
 			memset(buffer, 0, BUFFER_LENGTH);
+			UINT64 filesize = 0;
 
 			//create new file
 			ifstream fileinp(cb.path, ios::binary);
 			if (!fileinp.is_open()) 
 			{
-				cout << "\tError: cannot save uploaded file\n\n";
+				cout << "\tError: cannot open file\n\n";
 				return;
 			}
-			UINT64 filesize = fileinp.gcount();
+			fileinp.seekg(0, ios::end);
+			cb.filesize = fileinp.tellg();//total size
+			fileinp.seekg(0, ios::beg);
+
+
 			ProgressBar display;
 			display.setBarSize(20);
 			display.setTotalSize(cb.filesize);
@@ -227,18 +171,19 @@ void Eptipi::upFile(string fileName)
 			fileinp.close();
 		}
 	};
-
+	 
 	CallbackInfo callbackparam;
 	callbackparam.path = fileName;
 	callbackparam.mainFTP = this;
 	ifstream fileinp(fileName, ios::binary);
 	if (!fileinp.is_open())
 	{
-		cout << "\tError: cannot save uploaded file\n\n";
+		cout <<"\t"+fileName+ ": File not found\n\n";
 		return;
 	}
 	else
 		fileinp.close();
+
 	openDataPort(ASD::before, ASD::after, callbackparam);
 }
  
@@ -360,14 +305,48 @@ void Eptipi::upNhieuFile(string fileNames)
 	while (!split_path.eof()) 
 	{
 		getline(split_path, path_each, ' ');
-		
-		cout << "Put " << path_each << "?(y-yes/else-no): ";
-		cin.sync(); //flush \n
-		getline(cin, cmd);
-		if (cmd == "y" || cmd == "yes")
+
+		char buf[100];
+		GetCurrentDirectoryA(100,buf);
+		string sDir = buf;
+		WIN32_FIND_DATAA fdFile;
+		HANDLE hFind = NULL;
+		string sPath;
+		sPath = sDir + "\\" + path_each;
+		if ((hFind = FindFirstFileA(sPath.c_str(), &fdFile)) == INVALID_HANDLE_VALUE)
 		{
-			this->upFile(path_each);
+			cout <<"\t"<<path_each <<": File not found" << endl;
+			continue;
 		}
+
+		do
+		{
+			if (strcmp(fdFile.cFileName, ".") != 0
+				&& strcmp(fdFile.cFileName, "..") != 0)
+			{
+				sPath = sDir + "\\" + fdFile.cFileName;
+				if (fdFile.dwFileAttributes &FILE_ATTRIBUTE_DIRECTORY)
+				{
+				}
+				else{
+					filename = sPath.substr(sDir.length() + 1, sPath.length());
+					if (!isPrompt)
+					{
+						this->upFile(filename);
+						continue;
+					}
+					cout << "Put " << filename << "?(y-yes/else-no): ";
+					cin.sync(); //flush \n
+					getline(cin, cmd);
+					if (cmd == "y" || cmd == "yes")
+					{
+						this->upFile(filename);
+					}
+				}
+			}
+		} while (FindNextFileA(hFind, &fdFile)); //Find the next file.
+
+		FindClose(hFind); //Always, Always, clean things up!
 	}
 
 	cout << endl;
@@ -376,37 +355,36 @@ void Eptipi::upNhieuFile(string fileNames)
 /*------------------------------------------
 	mget
 */
+
+
 void Eptipi::downNhieuFile(string fileNames)
 {
-	struct GetFileList {
-		static bool before(CallbackInfo& cb) {
-			cb.mainFTP->sendCmd("NLST " + cb.path + "\r\n");
-			cb.mainFTP->receiveStatus();
-			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
-
-			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER
-				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
-				return false;
-			return true;
-		};
-		static void after(CallbackInfo& cb) {
-			if (cb.dataCon == NULL)
-				return;
-
-			cb.path = "";
-			char buffer[BUFFER_LENGTH] = { 0 };
-			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1)) {
-				cb.path += buffer;
-			}
-		}
-	};
-
-	stringstream split_path(fileNames);
-	string path_each;
-	string filename;
+	vector<string> nameList;
+	vector<string> dirList;
 	string cmd;
 	UCHAR isPrompt = true;
 
+	stringstream split_path(fileNames);
+	string path_each;
+
+	while (!split_path.eof())
+	{
+		getline(split_path, path_each, ' ');
+
+		vector<string> nameListEach = this->getNLST(path_each);
+		vector<string> dirListEach = this->getLIST(path_each);
+
+		nameList.insert(nameList.end(), nameListEach.begin(), nameListEach.end());
+		dirList.insert(dirList.end(), dirListEach.begin(), dirListEach.end());
+	}	
+	// nameList & dirList must be same size
+	if (nameList.size() != dirList.size())
+	{
+		cout << "Something went wrong" << endl;
+		return;
+	}
+	if (nameList.size() == 0) return;
+	
 	//ask user prompt or not
 	cout << "Do you want open prompt for each file?(y-yes, else-no) ";
 	cin >> cmd;
@@ -414,32 +392,23 @@ void Eptipi::downNhieuFile(string fileNames)
 	if (cmd != "y" && cmd != "yes")
 		isPrompt = false;
 
-	while (!split_path.eof()) {
-		getline(split_path, path_each, ' ');
+	for (size_t i = 0, length = nameList.size(); i < length; ++i)
+	{
+		if (dirList[i][0] != 'd')
+		{
+			//is not directory
+			//maybe is file...
+			if (isPrompt)
+			{
+				cout << "Get " << nameList[i] << " (y-yes,else-no)? ";
+				getline(cin, cmd);
+				cin.sync();
 
-		CallbackInfo cb;
-		cb.mainFTP = this;
-		cb.path = path_each;
-		openDataPort(GetFileList::before, GetFileList::after, cb);
-
-		stringstream forSplitFile(cb.path);
-
-		while (!forSplitFile.eof()) {
-			getline(forSplitFile, filename, '\r');
-			if (filename[0] == '\n') filename.erase(0, 1);
-			if (filename == "") break;
-
-			if (!isPrompt) {
-				this->downFile(filename);
-				continue;
+				if (cmd != "yes" && cmd != "y")
+					continue;
 			}
-
-			cout << "Get " << filename << "?(y-yes/else-no): ";
-			cin.sync(); //flush \n
-			getline(cin, cmd);
-			if (cmd == "y" || cmd == "yes") {
-				this->downFile(filename);
-			}
+			else
+				this->downFile(nameList[i]);
 		}
 	}
 
