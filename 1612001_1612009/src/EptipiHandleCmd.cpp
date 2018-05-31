@@ -229,14 +229,14 @@ void Eptipi::upFile(string fileName)
 			fileinp.close();
 		}
 	};
-
+	 
 	CallbackInfo callbackparam;
 	callbackparam.path = fileName;
 	callbackparam.mainFTP = this;
 	ifstream fileinp(fileName, ios::binary);
 	if (!fileinp.is_open())
 	{
-		cout << "\tError: cannot save uploaded file\n\n";
+		cout <<"\t"+fileName+ ": File not found\n\n";
 		return;
 	}
 	else
@@ -362,8 +362,6 @@ void Eptipi::upNhieuFile(string fileNames)
 	while (!split_path.eof()) 
 	{
 		getline(split_path, path_each, ' ');
-		////////////////////////////////////////////////////////////
-		//string sDir = GetCurrentDirectoryA();
 		char buf[100];
 		GetCurrentDirectoryA(100,buf);
 		string sDir = buf;
@@ -373,8 +371,8 @@ void Eptipi::upNhieuFile(string fileNames)
 		sPath = sDir + "\\" + path_each;
 		if ((hFind = FindFirstFileA(sPath.c_str(), &fdFile)) == INVALID_HANDLE_VALUE)
 		{
-			cout << "Path not found:" << sDir << endl;
-			//return false;
+			cout <<"\t"<<path_each <<": File not found" << endl;
+			continue;
 		}
 
 		do
@@ -387,8 +385,12 @@ void Eptipi::upNhieuFile(string fileNames)
 				{
 				}
 				else{
-					//cout << sPath.substr(sDir.length() + 1, sPath.length()) << endl;
 					filename = sPath.substr(sDir.length() + 1, sPath.length());
+					if (!isPrompt)
+					{
+						this->upFile(filename);
+						continue;
+					}
 					cout << "Put " << filename << "?(y-yes/else-no): ";
 					cin.sync(); //flush \n
 					getline(cin, cmd);
@@ -401,15 +403,6 @@ void Eptipi::upNhieuFile(string fileNames)
 		} while (FindNextFileA(hFind, &fdFile)); //Find the next file.
 
 		FindClose(hFind); //Always, Always, clean things up!
-		///////////////////////////////////////////////////////
-
-		//cout << "Put " << path_each << "?(y-yes/else-no): ";
-		//cin.sync(); //flush \n
-		//getline(cin, cmd);
-		//if (cmd == "y" || cmd == "yes")
-		//{
-		//	this->upFile(path_each);
-		//}
 	}
 
 	cout << endl;
