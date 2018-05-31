@@ -404,11 +404,13 @@ void Eptipi::downNhieuFile(string fileNames)
 				getline(cin, cmd);
 				cin.sync();
 
+				trimPath(cmd);
+
 				if (cmd != "yes" && cmd != "y")
 					continue;
 			}
-			else
-				this->downFile(nameList[i]);
+			
+			this->downFile(nameList[i]);
 		}
 	}
 
