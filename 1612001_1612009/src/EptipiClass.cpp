@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <conio.h>
 #include <sstream>
+#include <vector>
 
 using namespace std;
 
@@ -618,6 +619,14 @@ void Eptipi::handleCmd(string cmd, string path)
 	{
 		this->printServerPath();
 	}
+	else if (cmd == "mdel")
+	{
+		this->xoaNhieuFile(path);
+	}
+	else if (cmd == "mput")
+	{
+		this->upNhieuFile(path);
+	}
 }
 
 
@@ -626,4 +635,153 @@ void Eptipi::handleCmd(string cmd, string path)
 Eptipi::~Eptipi() {
 	sendCmd("QUIT\r\n");
 	cmdConn.Close();
+}
+
+
+/*----------------------------------------------------------
+*	LAY DANH SACH TEN TRONG FOLDER CUA SERVER CHI TIET
+*	@param (path) dung de liet ke cac file hoac folder thoa man path
+*/
+vector<string> Eptipi::getLIST(string path)
+{
+	struct GetFileList {
+		static bool before(CallbackInfo& cb) {
+			cb.mainFTP->sendCmd("LIST " + cb.path + "\r\n");
+			cb.mainFTP->receiveStatus();
+			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
+
+			cb.path = "";//reset
+
+			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER
+				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
+				return false;
+			return true;
+		};
+		static void after(CallbackInfo& cb) {
+			if (cb.dataCon == NULL)
+				return;
+
+			cb.path = "";
+			char buffer[BUFFER_LENGTH] = { 0 };
+			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1)) {
+				cb.path += buffer;
+				memset(buffer, 0, BUFFER_LENGTH);
+			}
+		}
+	};
+
+	CallbackInfo cb;
+	cb.mainFTP = this;
+	cb.path = path;
+	openDataPort(GetFileList::before, GetFileList::after, cb);
+
+	vector<string>result;
+	if (cb.path.length() == 0)
+		return result;
+	else
+	{
+		stringstream split(cb.path);
+		string name;
+		while (!split.eof())
+		{
+			getline(split, name, '\n');
+			if (name.length() > 0)
+			{
+				if (name.back() == '\r') name.pop_back();
+				result.push_back(name);
+			}
+		}
+	}
+
+	return result;
+}
+
+/*----------------------------------------------------------
+*	LAY DANH SACH TEN TRONG FOLDER CUA SERVER
+*	@param (path) dung de liet ke cac file hoac folder thoa man path
+*/
+vector<string> Eptipi::getNLST(string path)
+{
+	struct GetFileList {
+		static bool before(CallbackInfo& cb) {
+			cb.mainFTP->sendCmd("NLST " + cb.path + "\r\n");
+			cb.mainFTP->receiveStatus();
+			cout << '\t' << cb.mainFTP->getReturnStr() << endl;
+
+			cb.path = "";//reset
+
+			if (cb.mainFTP->getCode() != FTPCode::READY_TRANSFER
+				&& cb.mainFTP->getCode() != FTPCode::DATA_ALREADY_OPEN)
+				return false;
+			return true;
+		};
+		static void after(CallbackInfo& cb) {
+			if (cb.dataCon == NULL)
+				return;
+
+			cb.path = "";
+			char buffer[BUFFER_LENGTH] = { 0 };
+			while (cb.dataCon->Receive(buffer, BUFFER_LENGTH - 1)) {
+				cb.path += buffer;
+				memset(buffer, 0, BUFFER_LENGTH);
+			}
+		}
+	};
+
+	CallbackInfo cb;
+	cb.mainFTP = this;
+	cb.path = path;
+	openDataPort(GetFileList::before, GetFileList::after, cb);
+
+	vector<string>result;
+	if (cb.path.length() == 0)
+		return result;
+	else
+	{
+		stringstream split(cb.path);
+		string name;
+		while (!split.eof())
+		{
+			getline(split, name, '\n');
+			if (name.length() > 0)
+			{
+				if (name.back() == '\r') name.pop_back();
+				result.push_back(name);
+			}
+		}
+	}
+
+	return result;
+}
+
+
+/*
+* trim string : delete unused space
+* @param: path need to trim and return to it
+*/
+void Eptipi::trimPath(string &path)
+{
+	string result;
+	int countSpace = 0;
+	int pos_start = 0;
+	int length = path.length();
+
+	while (path[pos_start] == ' ' && pos_start < length)
+		++pos_start;
+
+	for (int i = pos_start; i < length; ++i)
+	{
+		if (path[i] == ' ') {
+			if (countSpace == 0)
+			{
+				result.push_back(path[i]);
+			}
+			++countSpace;
+		}
+		else {
+			countSpace = 0;
+			result.push_back(path[i]);
+		}
+	}
+	path = result;
 }

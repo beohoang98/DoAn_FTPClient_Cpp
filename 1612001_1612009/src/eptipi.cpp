@@ -62,6 +62,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 
 					cin.sync(); //flush \n
 					getline(cin, user_input);
+					Eptipi::trimPath(user_input);
 
 					to_split_input = stringstream(user_input);
 					getline(to_split_input, user_cmd, ' ');
